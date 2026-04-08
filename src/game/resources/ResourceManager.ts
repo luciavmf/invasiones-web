@@ -41,8 +41,8 @@ export class ResourceManager {
     async loadResourcePaths(): Promise<void> {
         const res = await this.fetchResJSON()
         this.resJson       = res
-        this.fontPaths     = res.fuentes.map((p: string) => `/data/${p}`)
-        this.imagePaths    = res.imagenes.map((p: string) => `/data/${p}`)
+        this.fontPaths     = res.fuentes.map((p: string) => `${import.meta.env.BASE_URL}data/${p}`)
+        this.imagePaths    = res.imagenes.map((p: string) => `${import.meta.env.BASE_URL}data/${p}`)
         this.animConfigs   = res.anims ?? []
         this.spriteConfigs = res.sprites ?? []
         this.unitConfigs   = res.unidades ?? []
@@ -82,7 +82,7 @@ export class ResourceManager {
 
     /// Loads (and caches) an image by relative path (e.g. 'imagenes/cursor.png').
     async getImageByPath(path: string): Promise<Surface | null> {
-        const url = `/data/${path}`
+        const url = `${import.meta.env.BASE_URL}data/${path}`
         const cached = this.imageByName.get(url)
         if (cached) return cached
 
@@ -188,7 +188,7 @@ export class ResourceManager {
         if (this.unitTypeData.length > 0) return
 
         for (const cfg of this.unitConfigs) {
-            const url = `/data/${cfg.file}`
+            const url = `${import.meta.env.BASE_URL}data/${cfg.file}`
             try {
                 const resp = await fetch(url)
                 if (!resp.ok) { this.unitTypeData.push(null); continue }
@@ -228,8 +228,8 @@ export class ResourceManager {
     // MARK: - Private
 
     private async fetchResJSON(): Promise<any> {
-        const response = await fetch('/data/res.json')
-        if (!response.ok) throw new Error('ResourceManager: failed to load /data/res.json')
+        const response = await fetch(`${import.meta.env.BASE_URL}data/res.json`)
+        if (!response.ok) throw new Error('ResourceManager: failed to load res.json')
         return response.json()
     }
 }

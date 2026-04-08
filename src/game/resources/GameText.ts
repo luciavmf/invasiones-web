@@ -123,7 +123,7 @@ export class GameText {
     /// Fetches and caches the strings file for the current language.
     static async loadStrings(): Promise<void> {
         const filename = Language.current.filename
-        const response = await fetch(`/data/${filename}`)
+        const response = await fetch(`${import.meta.env.BASE_URL}data/${filename}`)
         if (!response.ok) throw new Error(`GameText: failed to load ${filename}`)
         const dict: Record<string, string> = await response.json()
         GameText._strings = GameText.keyOrder.map(key => dict[key] ?? '')

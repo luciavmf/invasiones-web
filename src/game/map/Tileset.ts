@@ -62,7 +62,7 @@ export class Tileset {
         if (imgEl) {
             const src = imgEl.getAttribute('source') ?? ''
             const imgUrl = base + src
-            this.image = await ResourceManager.shared.getImageByPath(imgUrl.replace('/data/', ''))
+            this.image = await ResourceManager.shared.getImageByPath(imgUrl.replace(import.meta.env.BASE_URL + 'data/', ''))
             this.initTiles()
         }
 

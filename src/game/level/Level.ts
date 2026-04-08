@@ -30,7 +30,7 @@ export class Level {
     }
 
     async load(levelIndex: number): Promise<void> {
-        const url = `/data/nivel/nivel_${levelIndex}.xml`
+        const url = `${import.meta.env.BASE_URL}data/nivel/nivel_${levelIndex}.xml`
         try {
             const resp = await fetch(url)
             if (!resp.ok) { console.debug(`Level: not found: ${url}`); return }

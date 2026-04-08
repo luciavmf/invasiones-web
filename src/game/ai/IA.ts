@@ -16,7 +16,7 @@ export class IA {
     private currentBattle = 0
 
     async load(x: number, y: number, levelIndex: number): Promise<void> {
-        const url = `/data/nivel/orden_nv${levelIndex}_${x}_${y}.xml`
+        const url = `${import.meta.env.BASE_URL}data/nivel/orden_nv${levelIndex}_${x}_${y}.xml`
         try {
             const resp = await fetch(url)
             if (!resp.ok) { console.debug(`IA: file not found: ${url}`); return }

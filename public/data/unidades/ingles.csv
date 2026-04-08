@@ -1,0 +1,14 @@
+Sprite;ingles
+Tipo;Alcance
+Velocidad;2
+Puntos_Resistencia;50
+Puntos_Ataque;20
+Visibilidad;10
+Punteria;5
+Alcance_Tiro;8
+Intervalo_Entre_Ataques;20
+Modo;Agresivo
+Nombre;Soldado Ingles
+Avatar;unidades/ingles_avatar.png
+
+

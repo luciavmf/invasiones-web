@@ -1,0 +1,120 @@
+{
+  "fuentes": [
+    "fuentes/FreeSans.ttf",
+    "fuentes/LBLACK.TTF"
+  ],
+
+  "escenarios": {
+    "tilesets": [
+      "escenarios/debug.tsx",
+      "escenarios/pasto.tsx",
+      "escenarios/tierra.tsx",
+      "escenarios/agua.tsx",
+      "escenarios/arboles.tsx",
+      "escenarios/unidades.tsx",
+      "escenarios/piedras.tsx",
+      "escenarios/texturas.tsx",
+      "escenarios/piedras2.tsx",
+      "escenarios/enfermeria.tsx",
+      "escenarios/edificios.tsx",
+      "escenarios/invalidados.tsx",
+      "escenarios/objetivos.tsx",
+      "escenarios/fuerte.tsx"
+    ],
+    "mapas": [
+      "escenarios/nivel1a.tmx"
+    ]
+  },
+
+  "sonidos": {
+    "sfx": [
+      "sonidos/otheme.ogg",
+      "sonidos/disparo_2.wav",
+      "sonidos/disparo_1.wav",
+      "sonidos/patricio_muerto.wav",
+      "sonidos/TOS-rbattle.ogg"
+    ]
+  },
+
+  "imagenes": [
+    "imagenes/cursor_espada.png",
+    "imagenes/cursor_enfermeria.png",
+    "imagenes/cursor.png",
+    "imagenes/flecha.png",
+    "imagenes/icono.png",
+    "imagenes/logo.png",
+    "imagenes/splash.png",
+    "imagenes/fondo.png",
+    "escenarios/tile_gris.png",
+    "imagenes/hud.png",
+    "imagenes/boton.png",
+    "imagenes/boton_seleccion.png",
+    "imagenes/menu_2.png"
+  ],
+
+  "unidades": [
+    { "name": "patricio", "file": "unidades/patricio.csv" },
+    { "name": "ingles",   "file": "unidades/ingles.csv" }
+  ],
+
+  "sprites": [
+    {
+      "name": "patricio",
+      "animpaks": [
+        {
+          "name": "quieto",
+          "image": { "path": "unidades/patricio_quieto.png", "framewidth": 38, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        },
+        {
+          "name": "camina",
+          "image": { "path": "unidades/patricio_camina.png", "framewidth": 40, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        },
+        {
+          "name": "muere",
+          "image": { "path": "unidades/patricio_muere.png", "framewidth": 71, "frameheight": 57, "frameticks": 2, "offsetX": 59, "offsetY": 57 }
+        },
+        {
+          "name": "ataca",
+          "image": { "path": "unidades/patricio_ataca.png", "framewidth": 40, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        }
+      ]
+    },
+    {
+      "name": "ingles",
+      "animpaks": [
+        {
+          "name": "quieto",
+          "image": { "path": "unidades/ingles_quieto.png", "framewidth": 38, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        },
+        {
+          "name": "camina",
+          "image": { "path": "unidades/ingles_camina.png", "framewidth": 40, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        },
+        {
+          "name": "muere",
+          "image": { "path": "unidades/ingles_muere.png", "framewidth": 71, "frameheight": 57, "frameticks": 2, "offsetX": 59, "offsetY": 57 }
+        },
+        {
+          "name": "ataca",
+          "image": { "path": "unidades/ingles_ataca.png", "framewidth": 40, "frameheight": 53, "frameticks": 2, "offsetX": 20, "offsetY": 51 }
+        }
+      ]
+    }
+  ],
+
+  "anims": [
+    { "name": "AROS",            "imagepath": "imagenes/aros.png",              "framewidth": 220, "frameheight": 100, "offsetX": 110, "offsetY":  50, "frameticks": 5 },
+    { "name": "FLECHA_GUIA",     "imagepath": "imagenes/flecha_guia.png",       "framewidth":  80, "frameheight":  80, "offsetX":  40, "offsetY":  40, "frameticks": 1 },
+    { "name": "FUEGO_1",         "imagepath": "imagenes/fuego1.png",            "framewidth":  58, "frameheight":  86, "offsetX":  29, "offsetY":  86, "frameticks": 2 },
+    { "name": "FUEGO_2",         "imagepath": "imagenes/fuego2.png",            "framewidth": 102, "frameheight":  73, "offsetX":  29, "offsetY":  86, "frameticks": 2 },
+    { "name": "AYUDA_SELECCION", "imagepath": "imagenes/ayuda/seleccion.png",   "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 5 },
+    { "name": "AYUDA_MOVER",     "imagepath": "imagenes/ayuda/mover_b.png",     "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 5 },
+    { "name": "AYUDA_ATACAR",    "imagepath": "imagenes/ayuda/atacar.png",      "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 5 },
+    { "name": "AYUDA_OBJETIVO",  "imagepath": "imagenes/ayuda/objetivo.png",    "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 },
+    { "name": "AYUDA_SCROLL",    "imagepath": "imagenes/ayuda/scroll.png",      "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 },
+    { "name": "AYUDA_HUD",       "imagepath": "imagenes/ayuda/hud.png",         "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 },
+    { "name": "AYUDA_SANAR",     "imagepath": "imagenes/ayuda/sanar.png",       "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 },
+    { "name": "AYUDA_TIPS",      "imagepath": "imagenes/ayuda/tip.png",         "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 },
+    { "name": "AYUDA_GANAR",     "imagepath": "imagenes/ayuda/ganar.png",       "framewidth": 313, "frameheight": 243, "offsetX":   0, "offsetY":   0, "frameticks": 1 }
+  ]
+}

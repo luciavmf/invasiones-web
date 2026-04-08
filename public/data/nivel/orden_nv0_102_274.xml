@@ -1,0 +1,7 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<inteligencia>
+	<batalla>
+		<mover i="130" j="262"/>
+		<mover i="97" j="249"/>
+	</batalla>
+</inteligencia>

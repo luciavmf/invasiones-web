@@ -62,7 +62,7 @@ export class Map {
 
     async load(resJson: any, mapId: number): Promise<void> {
         const mapIdx = mapId - Res.TLS_COUNT  // local index within the mapas array
-        const mapUrl = `/data/${resJson.escenarios.mapas[mapIdx]}`
+        const mapUrl = `${import.meta.env.BASE_URL}data/${resJson.escenarios.mapas[mapIdx]}`
         if (!mapUrl) throw new Error(`Map: no path for map id ${mapId}`)
 
         this.tilesetCount = 0
@@ -320,7 +320,7 @@ export class Map {
             try {
                 await ts.load(tsUrl)
             } catch {
-                tsUrl = `/data/escenarios/${src.split('/').pop()}`
+                tsUrl = `${import.meta.env.BASE_URL}data/escenarios/${src.split('/').pop()}`
                 try { await ts.load(tsUrl) } catch { continue }
             }
             this.addTileset(ts)

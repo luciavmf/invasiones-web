@@ -12,12 +12,13 @@ export class Sound {
     private constructor() {}
 
     async loadAllSounds(): Promise<void> {
+        const base = import.meta.env.BASE_URL + 'data/sonidos/'
         const paths = [
-            '/data/sonidos/otheme.ogg',
-            '/data/sonidos/disparo_2.wav',
-            '/data/sonidos/disparo_1.wav',
-            '/data/sonidos/patricio_muerto.wav',
-            '/data/sonidos/TOS-rbattle.ogg',
+            base + 'otheme.ogg',
+            base + 'disparo_2.wav',
+            base + 'disparo_1.wav',
+            base + 'patricio_muerto.wav',
+            base + 'TOS-rbattle.ogg',
         ]
         for (let i = 0; i < Res.SFX_COUNT; i++) {
             const audio = new Audio(paths[i])

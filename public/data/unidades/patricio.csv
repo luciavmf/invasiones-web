@@ -1,0 +1,15 @@
+Sprite;patricio
+Tipo;Alcance
+Velocidad;2
+Puntos_Resistencia;100
+Puntos_Ataque;20
+Visibilidad;10
+Punteria;5
+Alcance_Tiro;8
+Intervalo_Entre_Ataques;30
+Modo;Agresivo
+Nombre;Soldado Arg
+Avatar;unidades/patricio_avatar.png
+Puntos_De_Recuperacion;20
+Ticks_Entre_Recuparacion;50
+

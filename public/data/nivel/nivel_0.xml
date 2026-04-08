@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<!-- **************************************
+Órdenes posibles: 
+================
+"tomar", tomar el objeto idicado por la imagen dada. un objeto
+<tomar i="102" j="208" imagen="imagenes/bandera.png"/>
+================
+"llegar" llegar a la posicion dada.
+ <llegar i="113" j="203"/>
+********************************************-->
+<batallas>
+	<!--Primer batalla-->
+	<batalla>
+		<objetivo>
+			<tomar i="111" j="222" imagen="imagenes/bandera.png"/>
+			<llegar i="36" j="207"/>
+		</objetivo>
+	</batalla>
+  
+  <!--Segunda batalla-->
+	<batalla>
+		<objetivo>
+			<tomar i="98" j="144" imagen="imagenes/tnt.png"/>
+			<llegar i="92" j="66"/>
+
+			<trigger i ="79" j="71" tipo="fuego2"/>
+			<trigger i ="82" j="74" tipo="fuego2"/>
+			<trigger i ="84" j="76" tipo="fuego2"/>
+			<trigger i ="85" j="77" tipo="fuego2"/>
+			<trigger i ="87" j="79" tipo="fuego2"/>
+			<trigger i ="89" j="81" tipo="fuego2"/>
+			<trigger i ="91" j="83" tipo="fuego2"/>
+			<trigger i ="92" j="84" tipo="fuego2"/>
+			<trigger i ="80" j="72" tipo="fuego2"/>
+			<trigger i ="81" j="68" tipo="fuego2"/>
+			<trigger i ="84" j="71" tipo="fuego2"/>
+			<trigger i ="86" j="73" tipo="fuego2"/>
+			<trigger i ="88" j="75" tipo="fuego2"/>
+			<trigger i ="89" j="76" tipo="fuego2"/>
+			<trigger i ="91" j="78" tipo="fuego2"/>
+			<trigger i ="82" j="79" tipo="fuego2"/>
+			<trigger i ="85" j="82" tipo="fuego2"/>
+		</objetivo>
+	</batalla>
+  
+  <!--Tercer Batalla-->
+  <batalla>
+    <objetivo>
+      <llegar i="216" j="102"/>
+    </objetivo>
+  </batalla>
+
+  <!--Cuarta Batalla-->
+  <batalla>
+    <objetivo>
+      <matar i="223" j="24" ancho ="15"/>
+    </objetivo>
+  </batalla>
+	<!--Aca va la segunda batalla parecido al de arriba.-->
+</batallas>

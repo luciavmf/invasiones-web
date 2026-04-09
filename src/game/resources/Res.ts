@@ -125,8 +125,7 @@ export const Res = {
     IMG_HUD:              9,
     IMG_BOTON:            10,
     IMG_BOTON_SELECCION:  11,
-    IMG_MENU_2:           12,
-    IMG_COUNT:            13,
+    IMG_COUNT:            12,
 
     // Unit types
     UNIDAD_PATRICIO: 0,

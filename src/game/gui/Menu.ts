@@ -34,9 +34,6 @@ export class Menu extends GUIBox {
         this.anchor    = anchor
 
         this.image = image
-        if (itemCount === 2) {
-            this.image = ResourceManager.shared.getImageSync(Res.IMG_MENU_2)
-        }
     }
 
     addItem(index: number, stringId: number, flag: number): boolean {
@@ -120,7 +117,7 @@ export class Menu extends GUIBox {
             if (flags !== Menu.Constants.itemHidden) {
                 if (flags & Menu.Constants.itemHover) {
                     video.setColor(GameColor.black)
-                    video.fillRect(this.posX + 2, y, this.buttonWidth, this.buttonHeight)
+                    video.fillRect(this.posX, y, this.buttonWidth, this.buttonHeight)
                 }
                 video.setFont(this.font, Theme.text)
                 video.writeId(

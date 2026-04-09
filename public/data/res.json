@@ -48,8 +48,7 @@
     "escenarios/tile_gris.png",
     "imagenes/hud.png",
     "imagenes/boton.png",
-    "imagenes/boton_seleccion.png",
-    "imagenes/menu_2.png"
+    "imagenes/boton_seleccion.png"
   ],
 
   "unidades": [

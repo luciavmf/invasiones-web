@@ -84,17 +84,10 @@ export const Res = {
     STR_MENU_AYUDA_TEXTO_TIPS_02:          77,
     STR_MENU_AYUDA_TEXTO_GANAR_01:         78,
     STR_MENU_AYUDA_TEXTO_GANAR_02:         79,
-    STR_TIP_00: 80,  STR_TIP_01: 81,  STR_TIP_02: 82,
-    STR_TIP_03: 83,  STR_TIP_04: 84,  STR_TIP_05: 85,
-    STR_TIP_06: 86,  STR_TIP_07: 87,  STR_TIP_08: 88,
-    STR_TIP_09: 89,  STR_TIP_10: 90,  STR_TIP_11: 91,
-    STR_TIP_12: 92,  STR_TIP_13: 93,  STR_TIP_14: 94,
-    STR_TIP_15: 95,  STR_TIP_16: 96,  STR_TIP_17: 97,
-    STR_TIP_18: 98,  STR_TIP_19: 99,  STR_TIP_20: 100,
-    STR_TIP_21: 101, STR_TIP_22: 102, STR_TIP_23: 103,
-    STR_LANGUAGE:       104,
-    STR_LANGUAGE_LABEL: 105,
-    STR_COUNT:          106,
+    STR_TIP_00:         80,   // "Tip!" button label
+    STR_LANGUAGE:       81,
+    STR_LANGUAGE_LABEL: 82,
+    STR_COUNT:          83,
 
     // Fonts
     FNT_SANS:   0,

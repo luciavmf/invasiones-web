@@ -2,10 +2,11 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { GUIBox }     from './GUIBox'
 import { Button }     from './Button'
+import { Res }        from '../resources/Res'
 import { Surface }    from '../rendering/Surface'
 import { Video }      from '../rendering/Video'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res }        from '../resources/Res'
+import { GameText }   from '../resources/GameText'
 import { FontConstants, Theme } from '../Definitions'
 import type { Video as VideoType } from '../rendering/Video'
 
@@ -20,6 +21,7 @@ export class Tips extends GUIBox {
     private static readonly H          = 100
 
     private tipButton: Button
+    private tipText    = ''
     private shouldShow = false
     private tipCount   = 0
     private blinkCount = 0
@@ -70,8 +72,8 @@ export class Tips extends GUIBox {
             video.setColor(Theme.menus)
             video.fillRect(this.posX, this.posY, this.width, this.height, Tips.ALPHA)
             video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], Theme.text)
-            video.writeId(
-                this.label,
+            video.write(
+                this.tipText,
                 this.posX - (Video.width >> 1) + (this.width >> 1),
                 this.posY + Math.trunc(this.height / 5),
                 Surface.centerHorizontal,
@@ -86,6 +88,7 @@ export class Tips extends GUIBox {
     }
 
     private generateRandomTip(): void {
-        this.label = Res.STR_TIP_01 + Math.floor(Math.random() * (Res.STR_TIP_23 - Res.STR_TIP_01))
+        const tips = GameText.tips
+        if (tips.length > 0) this.tipText = tips[Math.floor(Math.random() * tips.length)]
     }
 }

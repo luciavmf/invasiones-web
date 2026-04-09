@@ -1,8 +1,6 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { GUIBox } from './GUIBox'
-import { ResourceManager } from '../resources/ResourceManager'
-import { Res } from '../resources/Res'
 import { Theme, GameColor } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
@@ -28,7 +26,7 @@ export class Menu extends GUIBox {
     private originalY    = 0
     private anchor       = 0
 
-    constructor(image: Surface | null, itemCount: number, x: number, y: number, anchor: number) {
+    constructor(image: Surface | null, _itemCount: number, x: number, y: number, anchor: number) {
         super()
         this.items     = new Array(Menu.Constants.maxItemCount).fill(0)
         this.originalX = x

@@ -88,44 +88,27 @@ export class GameText {
         'help_tips_02',           // 77
         'help_win_01',            // 78
         'help_win_02',            // 79
-        'tip_00',                 // 80
-        'tip_01',                 // 81
-        'tip_02',                 // 82
-        'tip_03',                 // 83
-        'tip_04',                 // 84
-        'tip_05',                 // 85
-        'tip_06',                 // 86
-        'tip_07',                 // 87
-        'tip_08',                 // 88
-        'tip_09',                 // 89
-        'tip_10',                 // 90
-        'tip_11',                 // 91
-        'tip_12',                 // 92
-        'tip_13',                 // 93
-        'tip_14',                 // 94
-        'tip_15',                 // 95
-        'tip_16',                 // 96
-        'tip_17',                 // 97
-        'tip_18',                 // 98
-        'tip_19',                 // 99
-        'tip_20',                 // 100
-        'tip_21',                 // 101
-        'tip_22',                 // 102
-        'tip_23',                 // 103
-        'language',               // 104
-        'language_label',         // 105
+        'tip_00',                 // 80  ("Tip!" button label)
+        'language',               // 81
+        'language_label',         // 82
     ]
 
     private static _strings: string[] = []
+    private static _tips: string[] = []
 
     static get strings(): string[] { return GameText._strings }
+
+    /// All gameplay tips for the current language. Pick with a random index.
+    static get tips(): string[] { return GameText._tips }
 
     /// Fetches and caches the strings file for the current language.
     static async loadStrings(): Promise<void> {
         const filename = Language.current.filename
         const response = await fetch(`${import.meta.env.BASE_URL}data/${filename}`)
         if (!response.ok) throw new Error(`GameText: failed to load ${filename}`)
-        const dict: Record<string, string> = await response.json()
+        const raw: Record<string, unknown> = await response.json()
+        const dict = raw as Record<string, string>
         GameText._strings = GameText.keyOrder.map(key => dict[key] ?? '')
+        GameText._tips = Array.isArray(raw['tips']) ? raw['tips'] as string[] : []
     }
 }

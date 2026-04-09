@@ -19,7 +19,7 @@ import { Res }          from '../resources/Res'
 import { Sound }        from '../audio/Sound'
 import { Mouse }        from '../input/Mouse'
 import { Keyboard }     from '../input/Keyboard'
-import { FontConstants, UIColors, Layout, GameColor } from '../Definitions'
+import { FontConstants, Theme, Layout, GameColor } from '../Definitions'
 import { Unit }         from '../units/Unit'
 import type { Video as VideoType } from '../rendering/Video'
 
@@ -130,7 +130,7 @@ export class Episode {
 
     private drawLoadingState(video: VideoType): void {
         video.fillScreen(GameColor.black)
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.title)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
         video.writeId(Res.STR_CARGANDO, 0, C.loadingY, Surface.centerHorizontal)
     }
 
@@ -234,17 +234,17 @@ export class Episode {
     private drawShowIntroState(video: VideoType): void {
         this.drawPlayingState(video)
         const hudH = this.hud?.height ?? 0
-        video.setColor(UIColors.objectivesText)
+        video.setColor(Theme.objectivesText)
         video.fillRect(
             0, -(hudH >> 1),
             Video.width - (C.objectivesBorder << 1),
             Video.height - (C.objectivesBorder << 1) - hudH,
-            UIColors.alpha,
+            Theme.alpha,
             Surface.centerVertical | Surface.centerHorizontal,
         )
 
         const font = this.currentPage === 0 ? FontConstants.titleFont : FontConstants.objectivesFont
-        video.setFont(ResourceManager.shared.fonts[font], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[font], Theme.text)
 
         const strIdx = Res.STR_PRIMER_BATALLA + this.currentPage +
                        ((this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro)
@@ -273,16 +273,16 @@ export class Episode {
     private drawShowObjectiveState(video: VideoType): void {
         this.drawPlayingState(video)
         const hudH = this.hud?.height ?? 0
-        video.setColor(UIColors.objectivesText)
+        video.setColor(Theme.objectivesText)
         video.fillRect(0, -(hudH / 2), C.objectivesBoxWidth, C.objectivesBoxHeight,
-            UIColors.alpha, Surface.centerVertical | Surface.centerHorizontal)
+            Theme.alpha, Surface.centerVertical | Surface.centerHorizontal)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.text)
         video.writeId(Res.STR_OBJETIVOS, 0,
             -(hudH / 2) - C.objectivesBoxHeight / 2 + 50,
             Surface.centerVertical | Surface.centerHorizontal)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesFont], Theme.text)
         const strIdx = Res.STR_PRIMER_BATALLA + this.currentPage +
                        ((this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro)
         video.writeId(strIdx, 0, -(hudH >> 1) + 30, Surface.centerVertical | Surface.centerHorizontal)
@@ -337,7 +337,7 @@ export class Episode {
             this.setState(EpisodeState.showObjectives)
         } else if (this.showObjectiveReminder && this.objectiveShowCount > C.objectiveShowStartCount) {
             const camH = this.camera?.height ?? Video.height
-            video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], UIColors.title)
+            video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], Theme.title)
             video.writeId(Res.STR_OBJETIVOS, Layout.objectivesOffset << 1,
                 camH - (Layout.objectivesHeight + Layout.objectivesOffset * 2) - 10, 0)
             const strIdx = Res.STR_OBJETIVO_BATALLA_1_1 + (this.currentLevel?.completedObjectiveCount ?? 0)
@@ -413,7 +413,7 @@ export class Episode {
     private drawWonState(video: VideoType): void {
         this.drawPlayingState(video)
         this.button?.draw(video)
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.title)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
         video.writeId(Res.STR_GANASTE, 0, 0, Surface.centerHorizontal | Surface.centerVertical)
     }
 
@@ -427,7 +427,7 @@ export class Episode {
 
     private drawLostState(video: VideoType): void {
         this.drawPlayingState(video)
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.title)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
         video.writeId(Res.STR_PERDISTE, 0, -100, Surface.centerHorizontal | Surface.centerVertical)
         if (this.count > C.countdownToRestart) this.gameOverMenu.draw(video)
     }

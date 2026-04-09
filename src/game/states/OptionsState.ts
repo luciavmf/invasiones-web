@@ -6,7 +6,7 @@ import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
 import { GameText } from '../resources/GameText'
 import { Res } from '../resources/Res'
-import { UIColors, FontConstants, Layout } from '../Definitions'
+import { Theme, FontConstants, Layout } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import { Mouse, MOUSE_LEFT } from '../input/Mouse'
@@ -69,10 +69,10 @@ export class OptionsState extends State {
     draw(video: VideoType): void {
         video.draw(this.background, 0, 0, 0)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.text)
         video.writeId(Res.STR_MENU_OPCIONES, 0, Layout.titleYPosition, Surface.centerHorizontal)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.buttonFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.buttonFont], Theme.text)
         video.writeId(Res.STR_LANGUAGE_LABEL, 0, RadioLayout.startY - 28, Surface.centerHorizontal)
 
         Language.all.forEach((lang, i) => {
@@ -80,11 +80,11 @@ export class OptionsState extends State {
             const indY = rowY + (RadioLayout.rowHeight - RadioLayout.indSize) / 2
 
             if (lang === this.hoveredLanguage) {
-                video.setColor(UIColors.menus)
-                video.fillRoundedRect(RadioLayout.hoverX, rowY, RadioLayout.hoverW, RadioLayout.rowHeight - 2, 4, UIColors.alpha)
+                video.setColor(Theme.menus)
+                video.fillRoundedRect(RadioLayout.hoverX, rowY, RadioLayout.hoverW, RadioLayout.rowHeight - 2, 4, Theme.alpha)
             }
 
-            video.setColor(UIColors.text)
+            video.setColor(Theme.text)
             video.drawRect(RadioLayout.indX, indY, RadioLayout.indSize, RadioLayout.indSize, 0)
 
             if (lang === Language.current) {

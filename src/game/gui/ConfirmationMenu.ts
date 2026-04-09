@@ -3,7 +3,7 @@
 import { GUIBox } from './GUIBox'
 import { Button } from './Button'
 import { ResourceManager } from '../resources/ResourceManager'
-import { UIColors, FontConstants } from '../Definitions'
+import { Theme, FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import type { Video as VideoType } from '../rendering/Video'
@@ -56,10 +56,10 @@ export class ConfirmationMenu extends GUIBox {
     }
 
     draw(video: VideoType): void {
-        video.setColor(UIColors.menus)
+        video.setColor(Theme.menus)
         video.fillRect(this.posX, this.posY, this.width, this.height, ConfirmationMenu.Constants.alpha)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.menuFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.menuFont], Theme.text)
         video.writeId(
             this.label,
             this.posX - (Video.width >> 1) + (this.width >> 1),

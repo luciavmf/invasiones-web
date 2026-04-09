@@ -37,7 +37,7 @@ export const GameColor = {
 } as const
 
 /// Colors used in the UI.
-export const UIColors = {
+export const Theme = {
     menus:          GameColor.black,
     selection:      GameColor.red,
     text:           GameColor.white,

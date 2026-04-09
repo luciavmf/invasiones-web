@@ -3,7 +3,7 @@
 import { GUIBox } from './GUIBox'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Res } from '../resources/Res'
-import { UIColors, GameColor } from '../Definitions'
+import { Theme, GameColor } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import { Mouse, MOUSE_LEFT } from '../input/Mouse'
@@ -108,11 +108,11 @@ export class Menu extends GUIBox {
         } else {
             const padding     = 6
             const totalHeight = (this.buttonHeight + this.lineSpacing) * this.itemCount - this.lineSpacing
-            video.setColor(UIColors.menus)
+            video.setColor(Theme.menus)
             video.fillRoundedRect(
                 this.posX - padding, this.posY - padding,
                 this.buttonWidth + padding * 2, totalHeight + padding * 2,
-                10, UIColors.alpha,
+                10, Theme.alpha,
             )
         }
 
@@ -124,7 +124,7 @@ export class Menu extends GUIBox {
                     video.setColor(GameColor.black)
                     video.fillRect(this.posX + 2, y, this.buttonWidth, this.buttonHeight)
                 }
-                video.setFont(this.font, UIColors.text)
+                video.setFont(this.font, Theme.text)
                 video.writeId(
                     this.items[i] & 0xFF,
                     this.posX - (Video.width  >> 1) + (this.buttonWidth  >> 1),

@@ -5,7 +5,7 @@ import { StateMachine } from '../StateMachine'
 import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Res } from '../resources/Res'
-import { UIColors, FontConstants, FontIndex, Layout } from '../Definitions'
+import { Theme, FontConstants, FontIndex, Layout } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import { Button } from '../gui/Button'
@@ -69,13 +69,13 @@ export class HelpState extends State {
     draw(video: VideoType): void {
         video.draw(this.background, 0, 0, 0)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], UIColors.title)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
         video.writeId(Res.STR_MENU_AYUDA, 0, Layout.titleYPosition, Surface.centerHorizontal)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.helpTitleFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.helpTitleFont], Theme.text)
         video.writeId(Res.STR_MENU_AYUDA_TEXTO_SELECCIONAR_01 + this.substate * 2, 0, HELP_ITEM_Y, Surface.centerHorizontal)
 
-        video.setFont(ResourceManager.shared.fonts[FontConstants.helpFont], UIColors.text)
+        video.setFont(ResourceManager.shared.fonts[FontConstants.helpFont], Theme.text)
         video.writeId(Res.STR_MENU_AYUDA_TEXTO_SELECCIONAR_02 + this.substate * 2, 0, HELP_TEXT_Y, Surface.centerHorizontal)
 
         this.screenshot?.draw(video, 0, 150, Surface.centerHorizontal | Surface.centerVertical)

@@ -100,28 +100,21 @@ export class ResourceManager {
 
         this.fonts = new Array(FontIndex.total).fill(null)
 
-        const sansUrl    = this.fontPaths[Res.FNT_SANS]
-        const lblackUrl  = this.fontPaths[Res.FNT_LBLACK]
+        const lblackUrl = this.fontPaths[Res.FNT_LBLACK]
+        await GameFont.load('LBlack', lblackUrl, 14)
 
-        const [sans, lblack] = await Promise.all([
-            GameFont.load('FreeSans',  sansUrl,   14),
-            GameFont.load('LBlack',    lblackUrl, 14),
-        ])
-
-        this.fonts[FontIndex.sans12]   = new GameFont('FreeSans', 12)
-        this.fonts[FontIndex.sans14]   = new GameFont('FreeSans', 14)
-        this.fonts[FontIndex.sans18]   = new GameFont('FreeSans', 18)
-        this.fonts[FontIndex.sans20]   = new GameFont('FreeSans', 20)
-        this.fonts[FontIndex.sans24]   = new GameFont('FreeSans', 24)
-        this.fonts[FontIndex.sans28]   = new GameFont('FreeSans', 28)
-        this.fonts[FontIndex.lblack12] = new GameFont('LBlack',   12)
-        this.fonts[FontIndex.lblack14] = new GameFont('LBlack',   14)
-        this.fonts[FontIndex.lblack18] = new GameFont('LBlack',   18)
-        this.fonts[FontIndex.lblack20] = new GameFont('LBlack',   20)
-        this.fonts[FontIndex.lblack28] = new GameFont('LBlack',   28)
-
-        // suppress unused warning — fonts are registered as side effect of load()
-        void sans; void lblack
+        // FreeSans is replaced by the browser's built-in sans-serif.
+        this.fonts[FontIndex.sans12]   = new GameFont('sans-serif', 12)
+        this.fonts[FontIndex.sans14]   = new GameFont('sans-serif', 14)
+        this.fonts[FontIndex.sans18]   = new GameFont('sans-serif', 18)
+        this.fonts[FontIndex.sans20]   = new GameFont('sans-serif', 20)
+        this.fonts[FontIndex.sans24]   = new GameFont('sans-serif', 24)
+        this.fonts[FontIndex.sans28]   = new GameFont('sans-serif', 28)
+        this.fonts[FontIndex.lblack12] = new GameFont('LBlack',     12)
+        this.fonts[FontIndex.lblack14] = new GameFont('LBlack',     14)
+        this.fonts[FontIndex.lblack18] = new GameFont('LBlack',     18)
+        this.fonts[FontIndex.lblack20] = new GameFont('LBlack',     20)
+        this.fonts[FontIndex.lblack28] = new GameFont('LBlack',     28)
     }
 
     // MARK: - Animations

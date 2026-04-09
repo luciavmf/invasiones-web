@@ -3,7 +3,7 @@
 import { GUIBox } from './GUIBox'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Res } from '../resources/Res'
-import { UIColors, FontConstants } from '../Definitions'
+import { Theme, FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import { Mouse, MOUSE_LEFT } from '../input/Mouse'
@@ -59,19 +59,19 @@ export class Button extends GUIBox {
             if (this.selectedImage) {
                 video.draw(this.selectedImage, this.posX, this.posY, 0)
             } else {
-                video.setColor(UIColors.selection)
-                video.fillRect(this.posX, this.posY, this.width, this.height, UIColors.alpha)
+                video.setColor(Theme.selection)
+                video.fillRect(this.posX, this.posY, this.width, this.height, Theme.alpha)
             }
         } else {
             if (this.image) {
                 video.draw(this.image, this.posX, this.posY, 0)
             } else {
-                video.setColor(UIColors.menus)
-                video.fillRect(this.posX, this.posY, this.width, this.height, UIColors.alpha)
+                video.setColor(Theme.menus)
+                video.fillRect(this.posX, this.posY, this.width, this.height, Theme.alpha)
             }
         }
 
-        video.setFont(this.font, UIColors.text)
+        video.setFont(this.font, Theme.text)
         video.writeId(
             this.label,
             this.posX - Video.width  / 2 + this.width  / 2,

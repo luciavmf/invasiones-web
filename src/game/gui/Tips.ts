@@ -6,7 +6,7 @@ import { Surface }    from '../rendering/Surface'
 import { Video }      from '../rendering/Video'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Res }        from '../resources/Res'
-import { FontConstants, UIColors } from '../Definitions'
+import { FontConstants, Theme } from '../Definitions'
 import type { Video as VideoType } from '../rendering/Video'
 
 /// Floating window that shows random gameplay tips.
@@ -67,9 +67,9 @@ export class Tips extends GUIBox {
         if (!this.shouldShow) return
 
         if (this.tipButton.isUnderCursor) {
-            video.setColor(UIColors.menus)
+            video.setColor(Theme.menus)
             video.fillRect(this.posX, this.posY, this.width, this.height, Tips.ALPHA)
-            video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], UIColors.text)
+            video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], Theme.text)
             video.writeId(
                 this.label,
                 this.posX - (Video.width >> 1) + (this.width >> 1),

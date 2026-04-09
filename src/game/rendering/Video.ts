@@ -133,6 +133,7 @@ export class Video {
         })
 
         const label = new PIXI.Text({ text, style })
+        label.resolution = window.devicePixelRatio || 1
         label.anchor.set(
             (anchor & Surface.centerHorizontal) ? 0.5 : 0,
             (anchor & Surface.centerVertical)   ? 0.5 : 0,

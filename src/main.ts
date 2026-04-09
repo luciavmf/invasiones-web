@@ -10,10 +10,12 @@ import { Video } from './game/rendering/Video'
 const app = new PIXI.Application()
 
 await app.init({
-    width:           Video.width,
-    height:          Video.height,
-    backgroundColor: 0x000000,
-    antialias:       false,
+    width:            Video.width,
+    height:           Video.height,
+    backgroundColor:  0x000000,
+    antialias:        false,
+    resolution:       window.devicePixelRatio || 1,
+    autoDensity:      true,
 })
 
 document.querySelector<HTMLDivElement>('#app')!.appendChild(app.canvas)

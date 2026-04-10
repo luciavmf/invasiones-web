@@ -47,8 +47,8 @@ export class GameState extends State {
 
                 this.button = new Button(Res.STR_BOTON_MENU_DEL_JUEGO, null)
                 if (this.button) {
-                    this.button.posX = Video.width  - this.button.width  - Button.Constants.screenEdgeOffset
-                    this.button.posY = Button.Constants.screenEdgeOffset
+                    this.button.frame.posX = Video.width  - this.button.frame.width  - Button.Constants.screenEdgeOffset
+                    this.button.frame.posY = Button.Constants.screenEdgeOffset
                 }
 
                 this.confirmMenu = new ConfirmationMenu(

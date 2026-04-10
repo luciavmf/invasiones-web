@@ -1,6 +1,6 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
-import { GUIBox } from './GUIBox'
+import { Frame } from './Frame'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Theme, FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
@@ -9,7 +9,7 @@ import { Mouse, MOUSE_LEFT } from '../input/Mouse'
 import type { GameFont } from '../resources/GameFont'
 import type { Video as VideoType } from '../rendering/Video'
 
-export class Button extends GUIBox {
+export class Button {
 
     static readonly Constants = {
         screenEdgeOffset: 15,
@@ -17,28 +17,25 @@ export class Button extends GUIBox {
         defaultWidth:     100,
     }
 
+    frame = new Frame(Button.Constants.defaultWidth, Button.Constants.defaultHeight)
+    font:  GameFont | null
+    label: number
     isUnderCursor = false
 
     constructor(label: number, font: GameFont | null) {
-        super()
-        this.label  = label
-        this.height = Button.Constants.defaultHeight
-        this.width  = Button.Constants.defaultWidth
-        this.font   = font ?? ResourceManager.shared.fonts[FontConstants.buttonFont]
+        this.label = label
+        this.font  = font ?? ResourceManager.shared.fonts[FontConstants.buttonFont]
     }
 
     setPosition(x: number, y: number, anchor: number): void {
-        this.posX = x
-        this.posY = y
-        if (anchor & Surface.centerVertical)   this.posY += (Video.height >> 1) - (this.height >> 1)
-        if (anchor & Surface.centerHorizontal) this.posX += (Video.width  >> 1) - (this.width  >> 1)
+        this.frame.setPosition(x, y, anchor)
     }
 
     update(): number {
         const mx = Mouse.shared.x
         const my = Mouse.shared.y
-        this.isUnderCursor = mx > this.posX && mx < this.posX + this.width
-                          && my > this.posY && my < this.posY + this.height
+        this.isUnderCursor = mx > this.frame.posX && mx < this.frame.posX + this.frame.width
+                          && my > this.frame.posY && my < this.frame.posY + this.frame.height
 
         if (this.isUnderCursor && Mouse.shared.pressedButtons.has(MOUSE_LEFT)) {
             Mouse.shared.releaseButton(MOUSE_LEFT)
@@ -49,13 +46,13 @@ export class Button extends GUIBox {
 
     draw(video: VideoType): void {
         video.setColor(this.isUnderCursor ? Theme.buttonHover : Theme.menus)
-        video.fillRoundedRect(this.posX, this.posY, this.width, this.height, 6, this.isUnderCursor ? Theme.buttonHoverAlpha : Theme.alpha)
+        video.fillRoundedRect(this.frame.posX, this.frame.posY, this.frame.width, this.frame.height, 6, this.isUnderCursor ? Theme.buttonHoverAlpha : Theme.alpha)
 
         video.setFont(this.font, Theme.text)
         video.writeId(
             this.label,
-            this.posX - Video.width  / 2 + this.width  / 2,
-            this.posY - Video.height / 2 + this.height / 2,
+            this.frame.posX - Video.width  / 2 + this.frame.width  / 2,
+            this.frame.posY - Video.height / 2 + this.frame.height / 2,
             Surface.centerHorizontal | Surface.centerVertical,
         )
     }

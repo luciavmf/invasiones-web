@@ -34,8 +34,8 @@ export class OptionsState extends State {
     start(): void {
         this.background = ResourceManager.shared.getImageSync(Res.IMG_FONDO)
         this.backButton = new Button(Res.STR_BOTON_MENU, null)
-        this.backButton.posX = Video.width  - this.backButton.width  - Button.Constants.screenEdgeOffset
-        this.backButton.posY = Video.height - this.backButton.height - Button.Constants.screenEdgeOffset
+        this.backButton.frame.posX = Video.width  - this.backButton.frame.width  - Button.Constants.screenEdgeOffset
+        this.backButton.frame.posY = Video.height - this.backButton.frame.height - Button.Constants.screenEdgeOffset
     }
 
     update(): void {

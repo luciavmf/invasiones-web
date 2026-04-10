@@ -41,8 +41,8 @@ export class Hud {
         this.posY = Video.height - this.height
         this.tipsWindow = new Tips()
         this.tipsWindow.setPosition(
-            ((Video.width - this.tipsWindow.width) / 2) + 175,
-            this.posY - this.tipsWindow.height - 75,
+            ((Video.width - this.tipsWindow.frame.width) / 2) + 175,
+            this.posY - this.tipsWindow.frame.height - 75,
             0,
         )
     }

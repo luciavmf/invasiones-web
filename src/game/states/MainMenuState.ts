@@ -51,8 +51,8 @@ export class MainMenuState extends State {
 
         if (this.firstBuild) {
             this.firstBuild  = false
-            this.menuTargetY = Video.height - m.height - MENU_Y_OFFSET
-            this.posY        = Video.height + m.height + MENU_Y_OFFSET
+            this.menuTargetY = Video.height - m.frame.height - MENU_Y_OFFSET
+            this.posY        = Video.height + m.frame.height + MENU_Y_OFFSET
             m.setPosition(0, Video.height + 15, Surface.centerHorizontal)
         }
 

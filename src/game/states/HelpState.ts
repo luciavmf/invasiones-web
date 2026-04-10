@@ -32,16 +32,16 @@ export class HelpState extends State {
         const fnt = ResourceManager.shared.fonts[FontIndex.sans18]
 
         this.doneButton = new Button(Res.STR_BOTON_MENU, fnt)
-        this.doneButton.posX = Video.width  - this.doneButton.width  - Button.Constants.screenEdgeOffset
-        this.doneButton.posY = Video.height - this.doneButton.height - Button.Constants.screenEdgeOffset
+        this.doneButton.frame.posX = Video.width  - this.doneButton.frame.width  - Button.Constants.screenEdgeOffset
+        this.doneButton.frame.posY = Video.height - this.doneButton.frame.height - Button.Constants.screenEdgeOffset
 
         this.nextButton = new Button(Res.STR_SIGUIENTE, fnt)
-        this.nextButton.posX = Video.width  - this.nextButton.width  - Button.Constants.screenEdgeOffset
-        this.nextButton.posY = Video.height - this.nextButton.height - Button.Constants.screenEdgeOffset
+        this.nextButton.frame.posX = Video.width  - this.nextButton.frame.width  - Button.Constants.screenEdgeOffset
+        this.nextButton.frame.posY = Video.height - this.nextButton.frame.height - Button.Constants.screenEdgeOffset
 
         this.backButton = new Button(Res.STR_ATRAS, fnt)
-        this.backButton.posX = this.nextButton.posX - this.nextButton.width - Button.Constants.screenEdgeOffset
-        this.backButton.posY = this.nextButton.posY
+        this.backButton.frame.posX = this.nextButton.frame.posX - this.nextButton.frame.width - Button.Constants.screenEdgeOffset
+        this.backButton.frame.posY = this.nextButton.frame.posY
 
         this.substate = 0
         this.loadScreenshot(0)

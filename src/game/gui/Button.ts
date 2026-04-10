@@ -2,7 +2,6 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { GUIBox } from './GUIBox'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res } from '../resources/Res'
 import { Theme, FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
@@ -18,7 +17,6 @@ export class Button extends GUIBox {
         defaultWidth:     100,
     }
 
-    private selectedImage: Surface | null = null
     isUnderCursor = false
 
     constructor(label: number, font: GameFont | null) {
@@ -26,12 +24,7 @@ export class Button extends GUIBox {
         this.label  = label
         this.height = Button.Constants.defaultHeight
         this.width  = Button.Constants.defaultWidth
-
-        this.image         = ResourceManager.shared.getImageSync(Res.IMG_BOTON)
-        this.height        = this.image?.height ?? Button.Constants.defaultHeight
-        this.width         = this.image?.width  ?? Button.Constants.defaultWidth
-        this.selectedImage = ResourceManager.shared.getImageSync(Res.IMG_BOTON_SELECCION)
-        this.font          = font ?? ResourceManager.shared.fonts[FontConstants.buttonFont]
+        this.font   = font ?? ResourceManager.shared.fonts[FontConstants.buttonFont]
     }
 
     setPosition(x: number, y: number, anchor: number): void {
@@ -55,21 +48,8 @@ export class Button extends GUIBox {
     }
 
     draw(video: VideoType): void {
-        if (this.isUnderCursor) {
-            if (this.selectedImage) {
-                video.draw(this.selectedImage, this.posX, this.posY, 0)
-            } else {
-                video.setColor(Theme.selection)
-                video.fillRect(this.posX, this.posY, this.width, this.height, Theme.alpha)
-            }
-        } else {
-            if (this.image) {
-                video.draw(this.image, this.posX, this.posY, 0)
-            } else {
-                video.setColor(Theme.menus)
-                video.fillRect(this.posX, this.posY, this.width, this.height, Theme.alpha)
-            }
-        }
+        video.setColor(this.isUnderCursor ? Theme.buttonHover : Theme.menus)
+        video.fillRoundedRect(this.posX, this.posY, this.width, this.height, 6, this.isUnderCursor ? Theme.buttonHoverAlpha : Theme.alpha)
 
         video.setFont(this.font, Theme.text)
         video.writeId(

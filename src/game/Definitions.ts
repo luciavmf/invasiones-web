@@ -40,6 +40,8 @@ export const GameColor = {
 export const Theme = {
     menus:          GameColor.black,
     selection:      GameColor.red,
+    buttonHover:    GameColor.black,
+    buttonHoverAlpha: 200,
     text:           GameColor.white,
     alpha:          128,
     title:          GameColor.white,

@@ -123,9 +123,7 @@ export const Res = {
     IMG_FONDO:            7,
     IMG_TILE_GRIS:        8,
     IMG_HUD:              9,
-    IMG_BOTON:            10,
-    IMG_BOTON_SELECCION:  11,
-    IMG_COUNT:            12,
+    IMG_COUNT:            10,
 
     // Unit types
     UNIDAD_PATRICIO: 0,

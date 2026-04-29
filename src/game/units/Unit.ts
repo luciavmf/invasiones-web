@@ -61,6 +61,8 @@ export class Unit extends MapObject {
     private nextStateValue: UnitState = UnitState.idle
     private direction = 0   // 0=N,1=NE,2=E,3=SE,4=S,5=SW,6=W,7=NW
     pathToFollow: { i: number; j: number }[] | null = null
+    /// Tiles to treat as blocked on the next pathfinder call (set by evadeUnit, consumed by recalcNextStep).
+    private dodgeBlockedTiles: { i: number; j: number }[] = []
     private nextTile  = { x: 0, y: 0 }
     private nextStep  = { x: 0, y: 0 }
     isSelected  = false
@@ -111,6 +113,14 @@ export class Unit extends MapObject {
         if (src) this.sprite = src.clone()
     }
 
+    override updateScreenPos(): void {
+        const cam = MapObject.camera
+        const map = MapObject.map
+        if (!cam || !map) return
+        this.x = cam.startX + this.worldPos.x + cam.x + map.tileWidth / 2
+        this.y = cam.startY + this.worldPos.y + cam.y + map.tileHeight / 4
+    }
+
     override update(): boolean {
         if (this.stateValue === UnitState.dead) return false
 
@@ -137,10 +147,12 @@ export class Unit extends MapObject {
         if (this.isSelected) {
             const frac = this.health / Math.max(this.resistancePoints, 1)
             const bw   = Math.trunc(Unit.Constants.selectionBarWidth * frac)
+            const spriteHeight = this.sprite?.frameHeight ?? 0
+            const barY = this.y - spriteHeight + Unit.Constants.selectionBarY
             video.setColor(GameColor.green)
-            video.fillRect(this.x - Unit.Constants.selectionBarWidth / 2, this.y + Unit.Constants.selectionBarY, bw, 3)
+            video.fillRect(this.x - Unit.Constants.selectionBarWidth / 2, barY, bw, 3)
             video.setColor(GameColor.red)
-            video.fillRect(this.x - Unit.Constants.selectionBarWidth / 2 + bw, this.y + Unit.Constants.selectionBarY, Unit.Constants.selectionBarWidth - bw, 3)
+            video.fillRect(this.x - Unit.Constants.selectionBarWidth / 2 + bw, barY, Unit.Constants.selectionBarWidth - bw, 3)
         }
         if (this.sprite) {
             this.sprite.draw(video, this.x - this.sprite.frameWidth / 2, this.y - this.sprite.frameHeight)
@@ -215,14 +227,30 @@ export class Unit extends MapObject {
 
     // MARK: - Collision
 
+    /// Returns `true` if this unit's next step lands on the same tile as `other`.
+    /// Mirrors C# Unidad.HayColision: collision only when our next tile equals their
+    /// current resting tile (stationary) or their next tile (moving). Proximity alone
+    /// is not a collision — otherwise any nearby unit would trigger evade every frame
+    /// and movement would lock up.
     hasCollision(other: Unit): boolean {
-        const dx = Math.abs(this.physicalTilePos.x - other.physicalTilePos.x)
-        const dy = Math.abs(this.physicalTilePos.y - other.physicalTilePos.y)
-        return dx < 2 && dy < 2
+        if (other === this) return false
+        if (other.isMoving()) {
+            return this.nextTile.x === other.nextTile.x && this.nextTile.y === other.nextTile.y
+        }
+        return this.nextTile.x === other.physicalTilePos.x && this.nextTile.y === other.physicalTilePos.y
     }
 
-    evadeUnit(_other: Unit, _visible: Unit[] | null): void {
-        this.substate    = Substep.dodgeUnit
+    /// Triggers the evasion sub-state and captures nearby unit tiles so the next
+    /// A* call routes around them.
+    evadeUnit(_other: Unit, visible: Unit[] | null): void {
+        this.substate = Substep.dodgeUnit
+
+        const blocked: { i: number; j: number }[] = []
+        for (const u of visible ?? []) {
+            const tile = u.isMoving() ? u.nextTile : u.physicalTilePos
+            blocked.push({ i: tile.x, j: tile.y })
+        }
+        this.dodgeBlockedTiles = blocked
     }
 
     // MARK: - Queries
@@ -457,17 +485,21 @@ export class Unit extends MapObject {
 
     private recalcNextStep(): void {
         this.worldPos    = this.tileToWorld(this.physicalTilePos.x, this.physicalTilePos.y)
+
+        const blocked = this.dodgeBlockedTiles
+        this.dodgeBlockedTiles = []
+
         if (!this.pathToFollow || this.pathToFollow.length === 0) { this.setLastPos(); return }
 
         let nextTileIJ = this.pathToFollow.pop()!
         let newPath = PathFinder.shared.findShortestPath(
-            this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j)
+            this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j, blocked)
 
         while (!newPath) {
             if (!this.pathToFollow || this.pathToFollow.length === 0) { this.setLastPos(); return }
             nextTileIJ = this.pathToFollow.pop()!
             newPath = PathFinder.shared.findShortestPath(
-                this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j)
+                this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j, blocked)
         }
 
         const detour = newPath

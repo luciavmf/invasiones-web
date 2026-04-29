@@ -32,13 +32,17 @@ export class PathFinder {
     }
 
     /// Returns the shortest path or null. First element = destination, last = origin.
+    /// `blockedTiles`: extra tiles to treat as non-walkable for this call only
+    /// (used by evasion to route around other units without mutating the map).
     findShortestPath(
         startI: number, startJ: number,
         targetI: number, targetJ: number,
+        blockedTiles: { i: number; j: number }[] = [],
     ): { i: number; j: number }[] | null {
         const map = this.map
         if (!map || map.physicalTilesLayer.length === 0) return null
         if (!map.isWalkable(targetI, targetJ)) return null
+        if (blockedTiles.some(t => t.i === targetI && t.j === targetJ)) return null
 
         const start  = new Node(startI,  startJ)
         const target = new Node(targetI, targetJ)
@@ -63,28 +67,30 @@ export class PathFinder {
                 return this.reconstructPath(best)
             }
 
-            this.addChildren(best, open, closed, target, map)
+            this.addChildren(best, open, closed, target, map, blockedTiles)
             closed.push(best)
         }
         return null
     }
 
-    private addChildren(parent: Node, open: Node[], closed: Node[], target: Node, map: Map): void {
-        const up    = this.openNode(parent, parent.i - 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map)
-        const right = this.openNode(parent, parent.i,     parent.j + 1, this.COST_STRAIGHT, open, closed, target, map)
-        const down  = this.openNode(parent, parent.i + 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map)
-        const left  = this.openNode(parent, parent.i,     parent.j - 1, this.COST_STRAIGHT, open, closed, target, map)
-        if (up    && right) this.openNode(parent, parent.i - 1, parent.j + 1, this.COST_DIAGONAL, open, closed, target, map)
-        if (right && down)  this.openNode(parent, parent.i + 1, parent.j + 1, this.COST_DIAGONAL, open, closed, target, map)
-        if (down  && left)  this.openNode(parent, parent.i + 1, parent.j - 1, this.COST_DIAGONAL, open, closed, target, map)
-        if (left  && up)    this.openNode(parent, parent.i - 1, parent.j - 1, this.COST_DIAGONAL, open, closed, target, map)
+    private addChildren(parent: Node, open: Node[], closed: Node[], target: Node, map: Map, blocked: { i: number; j: number }[]): void {
+        const up    = this.openNode(parent, parent.i - 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map, blocked)
+        const right = this.openNode(parent, parent.i,     parent.j + 1, this.COST_STRAIGHT, open, closed, target, map, blocked)
+        const down  = this.openNode(parent, parent.i + 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map, blocked)
+        const left  = this.openNode(parent, parent.i,     parent.j - 1, this.COST_STRAIGHT, open, closed, target, map, blocked)
+        if (up    && right) this.openNode(parent, parent.i - 1, parent.j + 1, this.COST_DIAGONAL, open, closed, target, map, blocked)
+        if (right && down)  this.openNode(parent, parent.i + 1, parent.j + 1, this.COST_DIAGONAL, open, closed, target, map, blocked)
+        if (down  && left)  this.openNode(parent, parent.i + 1, parent.j - 1, this.COST_DIAGONAL, open, closed, target, map, blocked)
+        if (left  && up)    this.openNode(parent, parent.i - 1, parent.j - 1, this.COST_DIAGONAL, open, closed, target, map, blocked)
     }
 
     private openNode(
         parent: Node, i: number, j: number, cost: number,
         open: Node[], closed: Node[], target: Node, map: Map,
+        blocked: { i: number; j: number }[],
     ): boolean {
         if (!map.isWalkable(i, j)) return false
+        if (blocked.some(t => t.i === i && t.j === j)) return false
         const child = new Node(i, j)
         if (closed.some(n => n.equals(child))) return true
         child.costG = cost + parent.costG

@@ -38,6 +38,15 @@ export class Mouse {
     private cursorSurface: Surface | null = null
     private cursorHidden = false
 
+    /// True on touch-only devices (iPhone, iPad) — detected via media query.
+    /// We never draw the software cursor here, regardless of showCursor() calls.
+    private isTouchDevice = false
+
+    /// True if the most recent press came from a touch event. ArgentineTeam
+    /// uses this to treat a left-tap-with-selection as a move/attack command
+    /// (the touch equivalent of a desktop right-click).
+    lastPressWasTouch = false
+
     readonly pressedButtons = new Set<number>()
 
     private constructor() {}
@@ -87,12 +96,16 @@ export class Mouse {
     showCursor(): void { this.cursorHidden = false }
 
     drawCursor(video: Video): void {
-        if (this.cursorHidden || !this.cursorSurface) return
+        if (this.isTouchDevice || this.cursorHidden || !this.cursorSurface) return
         video.draw(this.cursorSurface, this._x, this._y, 255, 0)
     }
 
     /// Wire up DOM events on the canvas element. Call once at startup.
     attachTo(canvas: HTMLCanvasElement): void {
+        // Detect touch-only devices (iPhone, iPad) via media query so we can
+        // hide the software cursor and switch input behavior.
+        this.isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+
         const scaleX = () => VideoClass.width  / canvas.clientWidth
         const scaleY = () => VideoClass.height / canvas.clientHeight
 
@@ -113,6 +126,7 @@ export class Mouse {
         canvas.addEventListener('mousedown', e => {
             setPosFromMouse(e)
             this.pressedButtons.add(e.button)
+            this.lastPressWasTouch = false
         })
 
         canvas.addEventListener('mouseup', e => {
@@ -130,6 +144,7 @@ export class Mouse {
             setPosFromTouch(e.touches[0])
             this.pressedButtons.add(MOUSE_LEFT)
             this.pendingTouchRelease = false
+            this.lastPressWasTouch   = true
             e.preventDefault()
         }, { passive: false })
 

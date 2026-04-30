@@ -27,6 +27,12 @@ export class Mouse {
     private dragStartX = 0
     private dragStartY = 0
 
+    /// Touch taps fire touchstart + touchend in the same JS task on iOS Safari,
+    /// so we defer the release by one frame: the touchend handler sets
+    /// `pendingTouchRelease`, then the *next* update() removes MOUSE_LEFT.
+    /// This guarantees per-frame button polling observes the press.
+    private pendingTouchRelease = false
+
     dragRect = { x: 0, y: 0, width: 0, height: 0 }
 
     private cursorSurface: Surface | null = null
@@ -61,6 +67,14 @@ export class Mouse {
             this.finishedDragging = this.dragging
             this.dragging         = false
         }
+
+        // Consume a deferred touch release scheduled by an earlier touchend.
+        // Runs at end of update() so this frame's state.update() saw the press;
+        // next frame will see the release.
+        if (this.pendingTouchRelease) {
+            this.pressedButtons.delete(MOUSE_LEFT)
+            this.pendingTouchRelease = false
+        }
     }
 
     isDragging():        boolean { return this.dragging }
@@ -82,13 +96,22 @@ export class Mouse {
         const scaleX = () => VideoClass.width  / canvas.clientWidth
         const scaleY = () => VideoClass.height / canvas.clientHeight
 
-        canvas.addEventListener('mousemove', e => {
+        const setPosFromMouse = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect()
             this._x = Math.round((e.clientX - rect.left) * scaleX())
             this._y = Math.round((e.clientY - rect.top)  * scaleY())
-        })
+        }
+
+        const setPosFromTouch = (touch: Touch) => {
+            const rect = canvas.getBoundingClientRect()
+            this._x = Math.round((touch.clientX - rect.left) * scaleX())
+            this._y = Math.round((touch.clientY - rect.top)  * scaleY())
+        }
+
+        canvas.addEventListener('mousemove', setPosFromMouse)
 
         canvas.addEventListener('mousedown', e => {
+            setPosFromMouse(e)
             this.pressedButtons.add(e.button)
         })
 
@@ -98,5 +121,33 @@ export class Mouse {
 
         // Prevent context menu on right-click inside the game.
         canvas.addEventListener('contextmenu', e => e.preventDefault())
+
+        // Touch handlers synthesize MOUSE_LEFT events. preventDefault stops
+        // iOS from also firing synthetic mouse events (which would double-press)
+        // and from scrolling/zooming the page on tap.
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length === 0) return
+            setPosFromTouch(e.touches[0])
+            this.pressedButtons.add(MOUSE_LEFT)
+            this.pendingTouchRelease = false
+            e.preventDefault()
+        }, { passive: false })
+
+        canvas.addEventListener('touchmove', e => {
+            if (e.touches.length === 0) return
+            setPosFromTouch(e.touches[0])
+            e.preventDefault()
+        }, { passive: false })
+
+        canvas.addEventListener('touchend', e => {
+            if (e.changedTouches.length > 0) setPosFromTouch(e.changedTouches[0])
+            this.pendingTouchRelease = true
+            e.preventDefault()
+        }, { passive: false })
+
+        canvas.addEventListener('touchcancel', () => {
+            this.pressedButtons.delete(MOUSE_LEFT)
+            this.pendingTouchRelease = false
+        })
     }
 }

@@ -14,8 +14,11 @@ await app.init({
     height:           Video.height,
     backgroundColor:  0x000000,
     antialias:        false,
-    resolution:       Math.min(window.devicePixelRatio || 1, 1.5),
+    // Cap at integer 2 — non-integer ratios cause sprite positions to land on
+    // sub-pixels, which shows as visible seams between adjacent tiles.
+    resolution:       Math.min(window.devicePixelRatio || 1, 2),
     autoDensity:      true,
+    roundPixels:      true,
 })
 
 document.querySelector<HTMLDivElement>('#app')!.appendChild(app.canvas)

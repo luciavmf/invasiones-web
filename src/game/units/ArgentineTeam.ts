@@ -239,8 +239,16 @@ export class ArgentineTeam extends Player {
 
         if (!this.selectedUnit && !this.selectedGroup) return
 
-        if (Mouse.shared.pressedButtons.has(rb)) {
-            Mouse.shared.releaseButton(rb)
+        // On touch, a left-tap with selection acts as a right-click (the
+        // standard mobile RTS pattern: select once, then tap target). The
+        // unit-select branch above already releases lb for taps on friendlies,
+        // so reaching here with lb still pressed means the tap was on terrain
+        // or on an enemy.
+        const touchCommand = Mouse.shared.lastPressWasTouch && Mouse.shared.pressedButtons.has(lb)
+
+        if (Mouse.shared.pressedButtons.has(rb) || touchCommand) {
+            if (touchCommand) Mouse.shared.releaseButton(lb)
+            else              Mouse.shared.releaseButton(rb)
             const tile = this.map.smallTileUnderMouse
 
             if (this.map.isWalkable(tile.x, tile.y)) {

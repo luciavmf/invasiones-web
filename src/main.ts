@@ -7,6 +7,12 @@ import { Mouse } from './game/input/Mouse'
 import { Keyboard } from './game/input/Keyboard'
 import { Video } from './game/rendering/Video'
 
+// Match the canvas to the device viewport so it fills the screen without
+// stretching. The map renders more/less of the world depending on device
+// aspect ratio; tiles stay at native scale either way.
+Video.width  = Math.floor(window.innerWidth)
+Video.height = Math.floor(window.innerHeight)
+
 const app = new PIXI.Application()
 
 await app.init({

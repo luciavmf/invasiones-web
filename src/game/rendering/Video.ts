@@ -12,8 +12,12 @@ import { GameText } from '../resources/GameText'
 /// same as C#/SDL. No Y-flip needed (unlike SpriteKit).
 export class Video {
 
-    static readonly width  = 1024
-    static readonly height = 768
+    /// Logical render dimensions. Set once at startup from the device viewport
+    /// so the canvas fills the screen without stretching. UI/HUD code anchors
+    /// off these (centering, corner offsets), so changing them per-device just
+    /// shifts UI accordingly without touching layout math.
+    static width  = 1024
+    static height = 768
 
     private canvas: PIXI.Container
     private currentColor = 0x000000

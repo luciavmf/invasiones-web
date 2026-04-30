@@ -298,10 +298,7 @@ export class Episode {
         this.map?.update()
 
         if (this.map) {
-            this.map.visibleTilesLayer = Array.from(
-                { length: this.map.physicalMapHeight },
-                () => new Array(this.map!.physicalMapWidth).fill(0),
-            )
+            for (const row of this.map.visibleTilesLayer) row.fill(0)
         }
 
         this.player?.update()

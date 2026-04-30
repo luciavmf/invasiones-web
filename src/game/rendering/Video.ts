@@ -25,6 +25,20 @@ export class Video {
     private clipW = Video.width
     private clipH = Video.height
 
+    /// Pools of reusable display objects. clear() detaches everything from the
+    /// container; acquireSprite/Graphics re-attach pool entries on demand. This
+    /// avoids allocating a new PIXI.Sprite/Graphics per draw call (which would
+    /// cause heavy GC pressure and GPU memory growth on mobile).
+    private spritePool:   PIXI.Sprite[]   = []
+    private graphicsPool: PIXI.Graphics[] = []
+    private spriteIdx   = 0
+    private graphicsIdx = 0
+
+    /// Cache of PIXI.Text instances keyed by content+style. Identical labels
+    /// across frames reuse one rasterized canvas instead of being re-created.
+    private textCache = new Map<string, PIXI.Text>()
+    private readonly textResolution = Math.min(window.devicePixelRatio || 1, 1.5)
+
     constructor(app: PIXI.Application) {
         this.canvas = new PIXI.Container()
         app.stage.addChild(this.canvas)
@@ -34,6 +48,27 @@ export class Video {
 
     clear(): void {
         this.canvas.removeChildren()
+        this.spriteIdx   = 0
+        this.graphicsIdx = 0
+    }
+
+    private acquireSprite(): PIXI.Sprite {
+        if (this.spriteIdx >= this.spritePool.length) {
+            this.spritePool.push(new PIXI.Sprite())
+        }
+        const s = this.spritePool[this.spriteIdx++]
+        this.canvas.addChild(s)
+        return s
+    }
+
+    private acquireGraphics(): PIXI.Graphics {
+        if (this.graphicsIdx >= this.graphicsPool.length) {
+            this.graphicsPool.push(new PIXI.Graphics())
+        }
+        const g = this.graphicsPool[this.graphicsIdx++]
+        g.clear()
+        this.canvas.addChild(g)
+        return g
     }
 
     // MARK: - Draw surfaces
@@ -72,27 +107,23 @@ export class Video {
         if (anchor & Surface.centerHorizontal) px += Video.width  / 2 - tex.width  / 2
         if (anchor & Surface.centerVertical)   py += Video.height / 2 - tex.height / 2
 
-        const sprite = new PIXI.Sprite(tex)
-        sprite.x     = px
-        sprite.y     = py
-        sprite.alpha = Math.max(0, Math.min(alpha, 255)) / 255
-        this.canvas.addChild(sprite)
+        const sprite = this.acquireSprite()
+        sprite.texture = tex
+        sprite.x       = px
+        sprite.y       = py
+        sprite.alpha   = Math.max(0, Math.min(alpha, 255)) / 255
     }
 
     private drawSubregion(surface: Surface, srcX: number, srcY: number, srcW: number, srcH: number, destX: number, destY: number): void {
-        const tex = surface.texture
-        if (!tex || srcW <= 0 || srcH <= 0) return
+        if (srcW <= 0 || srcH <= 0) return
+        const subTex = surface.getSubTexture(srcX, srcY, srcW, srcH)
+        if (!subTex) return
 
-        const subTex = new PIXI.Texture({
-            source: tex.source,
-            frame:  new PIXI.Rectangle(srcX, srcY, srcW, srcH),
-        })
-
-        const sprite = new PIXI.Sprite(subTex)
-        sprite.x     = destX
-        sprite.y     = destY
-        sprite.alpha = surface.currentAlpha
-        this.canvas.addChild(sprite)
+        const sprite = this.acquireSprite()
+        sprite.texture = subTex
+        sprite.x       = destX
+        sprite.y       = destY
+        sprite.alpha   = surface.currentAlpha
     }
 
     // MARK: - Clip
@@ -123,17 +154,26 @@ export class Video {
         if (anchor & Surface.centerHorizontal) px += Video.width  / 2
         if (anchor & Surface.centerVertical)   py += Video.height / 2
 
-        const style = new PIXI.TextStyle({
-            fontFamily:    this.currentFont?.family ?? 'sans-serif',
-            fontSize:      this.currentFont?.size   ?? 14,
-            fill:          this.fontColor,
-            align:         (anchor & Surface.centerHorizontal) ? 'center' : 'left',
-            wordWrap:      true,
-            wordWrapWidth: Video.width - 80,
-        })
+        const fontFamily = this.currentFont?.family ?? 'sans-serif'
+        const fontSize   = this.currentFont?.size   ?? 14
+        const align      = (anchor & Surface.centerHorizontal) ? 'center' : 'left'
+        const cacheKey   = `${text}|${fontFamily}|${fontSize}|${this.fontColor}|${align}`
 
-        const label = new PIXI.Text({ text, style })
-        label.resolution = window.devicePixelRatio || 1
+        let label = this.textCache.get(cacheKey)
+        if (!label) {
+            const style = new PIXI.TextStyle({
+                fontFamily,
+                fontSize,
+                fill:          this.fontColor,
+                align,
+                wordWrap:      true,
+                wordWrapWidth: Video.width - 80,
+            })
+            label = new PIXI.Text({ text, style })
+            label.resolution = this.textResolution
+            this.textCache.set(cacheKey, label)
+        }
+
         label.anchor.set(
             (anchor & Surface.centerHorizontal) ? 0.5 : 0,
             (anchor & Surface.centerVertical)   ? 0.5 : 0,
@@ -151,9 +191,8 @@ export class Video {
         if (anchor & Surface.centerHorizontal) px += Video.width  / 2 - w / 2
         if (anchor & Surface.centerVertical)   py += Video.height / 2 - h / 2
 
-        const g = new PIXI.Graphics()
+        const g = this.acquireGraphics()
         g.rect(px, py, w, h).fill({ color: this.currentColor, alpha: alpha / 255 })
-        this.canvas.addChild(g)
     }
 
     /// Fills a rounded rectangle with the current colour.
@@ -162,9 +201,8 @@ export class Video {
         if (anchor & Surface.centerHorizontal) px += Video.width  / 2 - w / 2
         if (anchor & Surface.centerVertical)   py += Video.height / 2 - h / 2
 
-        const g = new PIXI.Graphics()
+        const g = this.acquireGraphics()
         g.roundRect(px, py, w, h, radius).fill({ color: this.currentColor, alpha: alpha / 255 })
-        this.canvas.addChild(g)
     }
 
     /// Fills the entire screen with a solid colour.
@@ -179,9 +217,8 @@ export class Video {
         if (anchor & Surface.centerHorizontal) px += Video.width  / 2 - w / 2
         if (anchor & Surface.centerVertical)   py += Video.height / 2 - h / 2
 
-        const g = new PIXI.Graphics()
+        const g = this.acquireGraphics()
         g.rect(px, py, w, h).stroke({ color: this.currentColor, width: 1 })
-        this.canvas.addChild(g)
     }
 
     // MARK: - Drawing state

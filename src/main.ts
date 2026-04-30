@@ -14,7 +14,7 @@ await app.init({
     height:           Video.height,
     backgroundColor:  0x000000,
     antialias:        false,
-    resolution:       window.devicePixelRatio || 1,
+    resolution:       Math.min(window.devicePixelRatio || 1, 1.5),
     autoDensity:      true,
 })
 

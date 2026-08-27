@@ -2,6 +2,8 @@
 
 Browser port of [Invasiones](https://github.com/luciavmf/invasiones), a strategy game about the British Invasions of Argentina (1806–1807), originally developed in C# as a graduation project at [UNLAM](https://www.unlam.edu.ar/).
 
+**Play it here:** https://luciavmf.github.io/invasiones-web/
+
 ## Requirements
 
 - [Node.js](https://nodejs.org/) v18 or later

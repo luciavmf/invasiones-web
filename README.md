@@ -43,3 +43,7 @@ Serves the `dist/` folder locally to check the production build before deploying
 - [Vite](https://vitejs.dev/) — build tool and dev server
 - [TypeScript](https://www.typescriptlang.org/)
 - [PixiJS](https://pixijs.com/) — 2D rendering
+
+## License
+
+The source code is released under the [MIT license](LICENSE). Some fonts and sounds come from third parties and keep their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

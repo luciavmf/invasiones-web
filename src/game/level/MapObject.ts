@@ -1,15 +1,14 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import type { Surface } from '../rendering/Surface'
-import type { Camera }  from '../map/Camera'
-import type { Map }     from '../map/Map'
+import type { Battlefield } from './Battlefield'
 import type { Video }   from '../rendering/Video'
 
 /// Base class for all drawable map objects (obstacles, units, animations).
 export class MapObject {
 
-    static camera: Camera | null = null
-    static map:    Map    | null = null
+    /// The map and camera the object is placed on.
+    readonly battlefield: Battlefield | null
 
     image:         Surface | null = null
     worldPos:      { x: number; y: number } = { x: 0, y: 0 }
@@ -20,7 +19,9 @@ export class MapObject {
     x = 0
     y = 0
 
-    constructor(sup?: Surface | null, i?: number, j?: number) {
+    /// Creates an object placed on `battlefield`, showing `sup` at tile (i, j) when given.
+    constructor(battlefield: Battlefield | null, sup?: Surface | null, i?: number, j?: number) {
+        this.battlefield = battlefield
         if (sup !== undefined) {
             this.image = sup ?? null
             if (sup) { this.frameHeight = sup.height; this.frameWidth = sup.width }
@@ -37,15 +38,15 @@ export class MapObject {
     }
 
     updateScreenPos(): void {
-        const cam = MapObject.camera
+        const cam = this.battlefield?.camera
         if (!cam) return
         this.x = cam.startX + this.worldPos.x + cam.x
         this.y = cam.startY + this.worldPos.y + cam.y
     }
 
     draw(video: Video): void {
-        if (!this.image || !MapObject.map) return
-        const map = MapObject.map
+        const map = this.battlefield?.map
+        if (!this.image || !map) return
         video.draw(
             this.image,
             this.x - this.frameWidth  / 2 + map.tileWidth  / 2,
@@ -55,7 +56,7 @@ export class MapObject {
     }
 
     tileToWorld(i: number, j: number): { x: number; y: number } {
-        const map = MapObject.map
+        const map = this.battlefield?.map
         if (!map) return { x: 0, y: 0 }
         const x = ((i - j) * map.tileWidth  / 2) >> 1
         const y = ((i + j) * map.tileHeight / 2) >> 1

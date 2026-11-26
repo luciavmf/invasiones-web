@@ -3,7 +3,7 @@
 import { Unit }        from './Unit'
 import { Command, CommandKind } from '../level/Command'
 import type { AI }     from '../level/AI'
-import type { Map }    from '../map/Map'
+import { lineOfSightPosition } from '../map/LineOfSight'
 
 const GroupState = {
     waitingCommand:  'waitingCommand',
@@ -19,7 +19,6 @@ type GroupState = typeof GroupState[keyof typeof GroupState]
 /// A squad of units sharing a movement strategy.
 export class Group {
 
-    static map: Map | null = null
 
     readonly id: number
     ai: AI | null = null
@@ -95,12 +94,12 @@ export class Group {
     heal(x: number, y: number): void {
         this.receivedCommand = new Command(CommandKind.heal, x, y)
         if (!this.commander) this.setAuxCommander()
-        const map = Group.map
+        const map = this.commander?.battlefield?.map
         if (!map || !this.commander) return
-        const p = map.getLineOfSightPosition(
+        const p = lineOfSightPosition(map,
             x, this.commander.physicalTilePos.x,
             y, this.commander.physicalTilePos.y)
-        if (p.x === -1) return
+        if (!p) return
         this.setHealing(p.x, p.y)
     }
 
@@ -227,7 +226,7 @@ export class Group {
         if (!this.commander) return
         const x = this.commander.physicalTilePos.x
         const y = this.commander.physicalTilePos.y
-        const map = Group.map
+        const map = this.commander.battlefield?.map
         if (!map) return
 
         let i = 0, j = 0, inc = 2, dir = 1, placed = 1, index = 0

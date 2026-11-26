@@ -1,6 +1,5 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
-import type { Map } from '../map/Map'
 
 class Node {
     parent: Node | null = null
@@ -13,6 +12,12 @@ class Node {
     equals(other: Node): boolean { return this.i === other.i && this.j === other.j }
 }
 
+/// Walkability of the physical tile grid. `Map` provides it in the game; tests use
+/// small hand-made grids.
+export interface WalkableGrid {
+    isWalkable(x: number, y: number): boolean
+}
+
 /// A* pathfinding on the physical tile grid (2× map resolution).
 export class PathFinder {
 
@@ -23,13 +28,19 @@ export class PathFinder {
     private readonly COST_MAX      = 99999
     private readonly TIMEOUT_MS    = 4500
 
-    private map: Map | null = null
+    private grid: WalkableGrid | null = null
 
-    /// The game uses `shared`; tests create their own on a hand-made grid.
-    constructor() {}
+    /// The game uses `shared`; tests create their own on a hand-made grid, and may pass
+    /// a clock (in milliseconds) to check the timeout.
+    private readonly now: () => number
 
-    loadMap(map: Map): void {
-        this.map = map
+    constructor(now: () => number = () => performance.now()) {
+        this.now = now
+    }
+
+    /// Uses this grid for the paths. The game passes the map once it's loaded.
+    loadMap(grid: WalkableGrid): void {
+        this.grid = grid
     }
 
     /// Returns the shortest path or null. First element = destination, last = origin.
@@ -40,8 +51,8 @@ export class PathFinder {
         targetI: number, targetJ: number,
         blockedTiles: { i: number; j: number }[] = [],
     ): { i: number; j: number }[] | null {
-        const map = this.map
-        if (!map || map.physicalTilesLayer.length === 0) return null
+        const map = this.grid
+        if (!map) return null
         if (!map.isWalkable(targetI, targetJ)) return null
         if (blockedTiles.some(t => t.i === targetI && t.j === targetJ)) return null
 
@@ -50,10 +61,10 @@ export class PathFinder {
 
         const open:   Node[] = [start]
         const closed: Node[] = []
-        const t0 = performance.now()
+        const t0 = this.now()
 
         while (open.length > 0) {
-            if (performance.now() - t0 > this.TIMEOUT_MS) return null
+            if (this.now() - t0 > this.TIMEOUT_MS) return null
 
             let bestIdx = 0
             for (let k = 1; k < open.length; k++) {
@@ -74,7 +85,7 @@ export class PathFinder {
         return null
     }
 
-    private addChildren(parent: Node, open: Node[], closed: Node[], target: Node, map: Map, blocked: { i: number; j: number }[]): void {
+    private addChildren(parent: Node, open: Node[], closed: Node[], target: Node, map: WalkableGrid, blocked: { i: number; j: number }[]): void {
         const up    = this.openNode(parent, parent.i - 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map, blocked)
         const right = this.openNode(parent, parent.i,     parent.j + 1, this.COST_STRAIGHT, open, closed, target, map, blocked)
         const down  = this.openNode(parent, parent.i + 1, parent.j,     this.COST_STRAIGHT, open, closed, target, map, blocked)
@@ -87,7 +98,7 @@ export class PathFinder {
 
     private openNode(
         parent: Node, i: number, j: number, cost: number,
-        open: Node[], closed: Node[], target: Node, map: Map,
+        open: Node[], closed: Node[], target: Node, map: WalkableGrid,
         blocked: { i: number; j: number }[],
     ): boolean {
         if (!map.isWalkable(i, j)) return false

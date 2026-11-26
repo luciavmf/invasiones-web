@@ -4,6 +4,7 @@ import { MapObject } from './MapObject'
 import type { Tileset } from '../map/Tileset'
 import type { Video }   from '../rendering/Video'
 import { TilesetID } from '../map/TilesetID'
+import type { Battlefield } from './Battlefield'
 
 /// A static obstacle on the map (tree, building, rock, etc.).
 export class Obstacle extends MapObject {
@@ -11,8 +12,8 @@ export class Obstacle extends MapObject {
     private index:      number
     private isBuilding: boolean
 
-    constructor(index: number, i: number, j: number, tileset: Tileset) {
-        super()
+    constructor(index: number, i: number, j: number, tileset: Tileset, battlefield: Battlefield) {
+        super(battlefield)
         this.index      = index
         this.isBuilding = false
 
@@ -44,8 +45,8 @@ export class Obstacle extends MapObject {
     }
 
     override draw(video: Video): void {
-        if (!this.image || !MapObject.map) return
-        const map = MapObject.map
+        const map = this.battlefield?.map
+        if (!this.image || !map) return
         const srcX = this.index * this.frameWidth
         const srcW = this.frameWidth, srcH = this.frameHeight
         if (this.isBuilding) {

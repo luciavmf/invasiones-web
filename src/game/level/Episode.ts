@@ -6,7 +6,6 @@ import { Level }        from './Level'
 import { Hud }          from './Hud'
 import { Obstacle }     from './Obstacle'
 import { ObjectTable }  from './ObjectTable'
-import { MapObject }    from './MapObject'
 import { Objective }    from './Objective'
 import { ArgentineTeam } from '../units/ArgentineTeam'
 import { EnemyTeam }    from '../units/EnemyTeam'
@@ -24,6 +23,7 @@ import type { Video as VideoType } from '../rendering/Video'
 import { SoundID } from '../audio/Sound'
 import { StringID, introPages, objectiveReminders } from '../resources/StringID'
 import { tilesetCount } from '../map/TilesetID'
+import type { Battlefield } from './Battlefield'
 
 const EpisodeState = {
     end:            -1,
@@ -56,6 +56,8 @@ export class Episode {
     private currentLevel: Level | null = null
     private objectsToDraw = new ObjectTable([[]])
     private camera: Camera | null = null
+    /// The map and camera, given to everything placed on the map.
+    private battlefield: Battlefield | null = null
     private objective: Objective | null = null
     private enemy:  EnemyTeam    | null = null
     private player: ArgentineTeam | null = null
@@ -143,14 +145,13 @@ export class Episode {
             const cam  = new Camera(0, 0, Video.height - hudH)
             this.camera = cam
             this.map    = new Map(cam)
+            this.battlefield = { map: this.map, camera: cam }
 
         } else if (this.count === 1) {
             const res = ResourceManager.shared.resJson
             await this.map!.load(res, tilesetCount + levelIdx)
-            MapObject.map    = this.map
-            MapObject.camera = this.camera
             const level = new Level()
-            await level.load(levelIdx)
+            await level.load(levelIdx, this.battlefield!)
             this.currentLevel = level
 
         } else if (this.count === 2) {
@@ -195,7 +196,7 @@ export class Episode {
                 const ts = map.getTileset(tileId)
                 if (!ts) continue
                 const localId = tileId - ts.firstGid
-                const obs = new Obstacle(localId, i * 2, j * 2, ts)
+                const obs = new Obstacle(localId, i * 2, j * 2, ts, this.battlefield!)
                 this.obstacles.push(obs)
                 const fi = i * 2, fj = j * 2
                 if (fi < this.objectsToDraw.table.length && fj < this.objectsToDraw.table[fi].length) {

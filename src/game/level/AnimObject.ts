@@ -3,14 +3,15 @@
 import { MapObject } from './MapObject'
 import { Animation } from '../sprites/Animation'
 import type { Video } from '../rendering/Video'
+import type { Battlefield } from './Battlefield'
 
 /// Animated object positioned on a map tile (fire effects, rings, etc.).
 export class AnimObject extends MapObject {
 
     readonly animation: Animation
 
-    constructor(anim: Animation, i: number, j: number) {
-        super()
+    constructor(anim: Animation, i: number, j: number, battlefield: Battlefield) {
+        super(battlefield)
         this.animation = anim
 
         this.physicalTilePos = { x: i, y: j }
@@ -36,9 +37,9 @@ export class AnimObject extends MapObject {
     }
 
     override draw(video: Video): void {
-        if (!MapObject.map) return
+        const map = this.battlefield?.map
+        if (!map) return
         if (this.worldPos.x === -1 || this.worldPos.y === -1) return
-        const map = MapObject.map
         this.animation.draw(video, this.x + map.tileWidth / 2, this.y + map.tileHeight / 2, 0)
     }
 

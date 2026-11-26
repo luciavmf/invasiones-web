@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { MapObject }    from '../level/MapObject'
 import { Command, CommandKind } from '../level/Command'
-import { PathFinder }  from '../pathfinding/PathFinder'
+import { PathFinder, type WalkableGrid } from '../pathfinding/PathFinder'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Sound, type SoundPlayer } from '../audio/Sound'
 import { Mouse }       from '../input/Mouse'
@@ -13,6 +13,8 @@ import type { Group }   from './Group'
 import { GameColor }   from '../Definitions'
 import { SoundID } from '../audio/Sound'
 import { SpriteID, UnitType } from '../resources/UnitType'
+import type { Battlefield } from '../level/Battlefield'
+import { lineOfSightPosition } from '../map/LineOfSight'
 
 const UnitState = {
     idle: 'idle', moving: 'moving', dying: 'dying',
@@ -105,9 +107,10 @@ export class Unit extends MapObject {
     get myGroup(): Group | null { return this.group_ }
 
     /// Creates a unit of the given type with the stats ResourceManager loaded for it.
-    /// Tests leave out the type, and pass their own pathfinder and sound.
-    constructor(typeId?: UnitType, pathFinder: PathFinder = PathFinder.shared, sound: SoundPlayer = Sound.shared) {
-        super()
+    /// Tests leave out the type, and pass their own battlefield, pathfinder and sound.
+    constructor(typeId?: UnitType, battlefield: Battlefield | null = null,
+                pathFinder: PathFinder = PathFinder.shared, sound: SoundPlayer = Sound.shared) {
+        super(battlefield)
         this.pathFinder = pathFinder
         this.sound = sound
         if (typeId === undefined) return
@@ -134,8 +137,8 @@ export class Unit extends MapObject {
     }
 
     override updateScreenPos(): void {
-        const cam = MapObject.camera
-        const map = MapObject.map
+        const cam = this.battlefield?.camera
+        const map = this.battlefield?.map
         if (!cam || !map) return
         this.x = cam.startX + this.worldPos.x + cam.x + map.tileWidth / 2
         this.y = cam.startY + this.worldPos.y + cam.y + map.tileHeight / 4
@@ -224,9 +227,10 @@ export class Unit extends MapObject {
     recoverHealth(): void { this.setState(UnitState.healing) }
 
     heal(x: number, y: number): void {
-        if (!MapObject.map) return
-        const p = MapObject.map.getLineOfSightPosition(x, this.physicalTilePos.x, y, this.physicalTilePos.y)
-        if (p.x === -1) return
+        const map = this.battlefield?.map
+        if (!map) return
+        const p = lineOfSightPosition(map, x, this.physicalTilePos.x, y, this.physicalTilePos.y)
+        if (!p) return
         this.setHealing(p.x, p.y)
     }
 
@@ -283,7 +287,7 @@ export class Unit extends MapObject {
     }
 
     isOnScreen(): boolean {
-        const cam = MapObject.camera
+        const cam = this.battlefield?.camera
         if (!cam) return false
         return this.x >= cam.startX && this.x <= cam.startX + cam.width &&
                this.y >= cam.startY && this.y <= cam.startY + cam.height
@@ -332,7 +336,7 @@ export class Unit extends MapObject {
     // MARK: - Formation path
 
     calculatePathAtDistance(commanderPath: { i: number; j: number }[], offsetX: number, offsetY: number): void {
-        const map = MapObject.map
+        const map = this.battlefield?.map
         if (!map) return
         this.setState(UnitState.moving)
         this.nextStateValue = UnitState.idle
@@ -368,7 +372,7 @@ export class Unit extends MapObject {
         this.substate = Substep.incrementStep
     }
 
-    private findNextValidPos(list: { i: number; j: number }[], from: number, map: any): number | null {
+    private findNextValidPos(list: { i: number; j: number }[], from: number, map: WalkableGrid): number | null {
         let idx = from
         while (idx < list.length && !map.isWalkable(list[idx].i, list[idx].j)) idx++
         if (idx >= list.length) return null
@@ -379,7 +383,7 @@ export class Unit extends MapObject {
         return idx
     }
 
-    private findPrevValidPos(list: { i: number; j: number }[], from: number, map: any): number | null {
+    private findPrevValidPos(list: { i: number; j: number }[], from: number, map: WalkableGrid): number | null {
         let idx = from
         while (idx >= 0 && !map.isWalkable(list[idx].i, list[idx].j)) idx--
         return idx < 0 ? null : idx
@@ -562,7 +566,7 @@ export class Unit extends MapObject {
     }
 
     private findRandomPatrolPath(i: number, j: number): { i: number; j: number }[] | null {
-        const map = MapObject.map
+        const map = this.battlefield?.map
         if (!map) return null
         const range = Unit.Constants.patrolRandomMax - Unit.Constants.patrolRandomMin
         for (let attempt = 0; attempt < 20; attempt++) {

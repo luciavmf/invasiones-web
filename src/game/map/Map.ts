@@ -200,24 +200,6 @@ export class Map {
         return id === TilesetID.grass || id === TilesetID.dirt
     }
 
-    getLineOfSightPosition(x1: number, x2: number, y1: number, y2: number): { x: number; y: number } {
-        let col = x1, row = y1
-        const rs = this.getRowSlope(x1, x2, y1, y2)
-        const cs = this.getColSlope(x1, x2, y1, y2)
-        if (Math.abs(rs) === 1) {
-            while (Math.trunc(row) !== y2) {
-                if (this.isWalkable(Math.trunc(col), Math.trunc(row))) return { x: Math.trunc(col), y: Math.trunc(row) }
-                row += rs; col += cs
-            }
-        } else {
-            while (Math.trunc(col) !== x2) {
-                if (this.isWalkable(Math.trunc(col), Math.trunc(row))) return { x: Math.trunc(col), y: Math.trunc(row) }
-                row += rs; col += cs
-            }
-        }
-        return { x: -1, y: -1 }
-    }
-
     invalidateTile(x: number, y: number): void {
         if (x < 0 || y < 0 || x + 1 >= this.width * 2 || y + 1 >= this.height * 2) return
         const v = TilesetID.trees
@@ -255,18 +237,6 @@ export class Map {
             : Math.trunc((x - cam.x - cam.startX - this.physicalTileWidth) / this.physicalTileWidth)
         this.smallTileUnderMouse = { x: aF + bF, y: aF - bF }
         return { x: a + b, y: a - b }
-    }
-
-    private getRowSlope(x1: number, x2: number, y1: number, y2: number): number {
-        if (Math.abs(y2 - y1) > Math.abs(x2 - x1)) return y2 > y1 ? 1 : -1
-        const d = Math.abs(y2 - y1) / Math.abs(x2 - x1)
-        return d * (y2 > y1 ? 1 : -1)
-    }
-
-    private getColSlope(x1: number, x2: number, y1: number, y2: number): number {
-        if (Math.abs(x2 - x1) > Math.abs(y2 - y1)) return x2 > x1 ? 1 : -1
-        const d = Math.abs(x2 - x1) / Math.abs(y2 - y1)
-        return d * (x2 > x1 ? 1 : -1)
     }
 
     // MARK: - TMX loading (async)

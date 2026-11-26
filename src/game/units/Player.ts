@@ -11,6 +11,7 @@ import { Map }        from '../map/Map'
 import type { Camera } from '../map/Camera'
 import type { Hud }   from '../level/Hud'
 import type { UnitType } from '../resources/UnitType'
+import type { Battlefield } from '../level/Battlefield'
 
 export type Faction = 'enemy' | 'argentine'
 
@@ -49,6 +50,9 @@ export class Player {
         this.hud          = hud
     }
 
+    /// The map and camera, given to the units and objects this team places.
+    get battlefield(): Battlefield { return { map: this.map, camera: this.camera } }
+
     update(): void { throw new Error('update() must be overridden') }
     async loadUnits(_levelIndex: number): Promise<void> { throw new Error('loadUnits() must be overridden') }
 
@@ -61,7 +65,7 @@ export class Player {
 
         if (this.command) {
             if (this.command.id === CommandKind.takeObject && this.command.image) {
-                this.objectToTake = new MapObject(this.command.image, this.command.point.x, this.command.point.y)
+                this.objectToTake = new MapObject(this.battlefield, this.command.image, this.command.point.x, this.command.point.y)
             }
             if (this.ring) this.ring.setPosition(this.command.point.x, this.command.point.y)
         }
@@ -213,7 +217,7 @@ export class Player {
 
     private placeUnitInternal(type: UnitType, i: number, j: number): Unit | null {
         if (!this.map.isWalkable(i, j)) return null
-        const u = new Unit(type)
+        const u = new Unit(type, this.battlefield)
         u.physicalTilePos = { x: i, y: j }
         u.previousTile    = { x: i, y: j }
         u.initializeXY()

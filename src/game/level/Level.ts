@@ -6,6 +6,7 @@ import { AnimObject }   from './AnimObject'
 import { ResourceManager } from '../resources/ResourceManager'
 import type { Surface } from '../rendering/Surface'
 import { AnimationID } from '../resources/AnimationID'
+import type { Battlefield } from './Battlefield'
 
 const MAX_BATTLES = 5
 
@@ -29,7 +30,9 @@ export class Level {
         return this.battles[this.currentBattleIndex]?.objectiveCount ?? 0
     }
 
-    async load(levelIndex: number): Promise<void> {
+    /// Reads the level's battles and objectives from nivel_N.xml. `battlefield` is the map
+    /// and camera for the fire animations that trigger commands place.
+    async load(levelIndex: number, battlefield: Battlefield): Promise<void> {
         const url = `${import.meta.env.BASE_URL}data/nivel/nivel_${levelIndex}.xml`
         try {
             const resp = await fetch(url)
@@ -76,7 +79,7 @@ export class Level {
                             else if (t === 'fuego2') animIdx = AnimationID.fire2
                             if (animIdx >= 0 && ResourceManager.shared.animations[animIdx]) {
                                 const animObj = new AnimObject(
-                                    ResourceManager.shared.animations[animIdx]!.clone(), iVal, jVal)
+                                    ResourceManager.shared.animations[animIdx]!.clone(), iVal, jVal, battlefield)
                                 cmd = new Command(kind, iVal, jVal, animObj)
                             } else {
                                 cmd = new Command(kind, iVal, jVal)

@@ -35,11 +35,10 @@ export class ArgentineTeam extends Player {
     constructor(map: Map, camera: Camera, objectsToDraw: ObjectTable, hud: Hud) {
         super(map, camera, objectsToDraw, hud)
         this.faction = 'argentine'
-        Group.map    = map
 
         const anims = ResourceManager.shared.animations
         if (AnimationID.rings < anims.length && anims[AnimationID.rings]) {
-            this.ring = new AnimObject(anims[AnimationID.rings]!.clone(), 0, 0)
+            this.ring = new AnimObject(anims[AnimationID.rings]!.clone(), 0, 0, this.battlefield)
         }
         if (AnimationID.guideArrow < anims.length && anims[AnimationID.guideArrow]) {
             const anim = anims[AnimationID.guideArrow]!.clone()
@@ -57,7 +56,7 @@ export class ArgentineTeam extends Player {
     }
 
     override async loadUnits(_levelIndex: number): Promise<void> {
-        this.arrowObj = new MapObject(
+        this.arrowObj = new MapObject(this.battlefield,
             ResourceManager.shared.getImageSync(ImageID.arrow), 0, 0)
         this.count_ = 99999
 
@@ -106,8 +105,7 @@ export class ArgentineTeam extends Player {
     }
 
     getPaintCoordinates(): { x: number; y: number; w: number; h: number } {
-        const cam = MapObject.camera
-        if (!cam) return { x: 0, y: 0, w: this.map.physicalMapHeight, h: this.map.physicalMapWidth }
+        const cam = this.camera
         const p  = this.calcFirstTile(cam.x, cam.y)
         const tw = this.map.physicalTileWidth  > 0 ? this.map.physicalTileWidth  : 1
         const th = this.map.physicalTileHeight > 0 ? this.map.physicalTileHeight : 1

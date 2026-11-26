@@ -1,9 +1,9 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { MapObject } from './MapObject'
-import { Res } from '../resources/Res'
 import type { Tileset } from '../map/Tileset'
 import type { Video }   from '../rendering/Video'
+import { TilesetID } from '../map/TilesetID'
 
 /// A static obstacle on the map (tree, building, rock, etc.).
 export class Obstacle extends MapObject {
@@ -25,13 +25,13 @@ export class Obstacle extends MapObject {
         const p = this.tileToWorld(i, j)
         this.worldPos = p
 
-        if (tileset.id === Res.TLS_EDIFICIOS ||
-            tileset.id === Res.TLS_ENFERMERIA ||
-            tileset.id === Res.TLS_FUERTE) {
+        if (tileset.id === TilesetID.buildings ||
+            tileset.id === TilesetID.infirmary ||
+            tileset.id === TilesetID.fort) {
             this.isBuilding = true
         }
 
-        if (tileset.id === Res.TLS_DEBUG) {
+        if (tileset.id === TilesetID.debug) {
             this.image = null
         }
 

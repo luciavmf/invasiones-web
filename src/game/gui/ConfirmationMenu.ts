@@ -7,6 +7,7 @@ import { Theme, FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
 import type { Video as VideoType } from '../rendering/Video'
+import type { StringID } from '../resources/StringID'
 
 export const ConfirmationSelection = { none: -1, left: 0, right: 1 } as const
 
@@ -19,12 +20,12 @@ export class ConfirmationMenu {
     }
 
     frame = new Frame(ConfirmationMenu.Constants.defaultWidth, ConfirmationMenu.Constants.defaultHeight)
-    label: number
+    label: StringID
 
     private leftButton:  Button
     private rightButton: Button
 
-    constructor(label: number, btn1: number, btn2: number) {
+    constructor(label: StringID, btn1: StringID, btn2: StringID) {
         this.label       = label
         this.leftButton  = new Button(btn1, null)
         this.rightButton = new Button(btn2, null)

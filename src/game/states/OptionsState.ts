@@ -5,7 +5,6 @@ import { StateMachine } from '../StateMachine'
 import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
 import { GameText } from '../resources/GameText'
-import { Res } from '../resources/Res'
 import { Theme, FontConstants, Layout } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
@@ -13,6 +12,8 @@ import { Mouse, MOUSE_LEFT } from '../input/Mouse'
 import { Language } from '../Language'
 import { Button } from '../gui/Button'
 import type { Video as VideoType } from '../rendering/Video'
+import { ImageID } from '../resources/ImageID'
+import { StringID } from '../resources/StringID'
 
 const RadioLayout = {
     startY:    325,
@@ -32,8 +33,8 @@ export class OptionsState extends State {
     constructor(sm: StateMachine) { super(sm) }
 
     start(): void {
-        this.background = ResourceManager.shared.getImageSync(Res.IMG_FONDO)
-        this.backButton = new Button(Res.STR_BOTON_MENU, null)
+        this.background = ResourceManager.shared.getImageSync(ImageID.background)
+        this.backButton = new Button(StringID.buttonBack, null)
         this.backButton.frame.posX = Video.width  - this.backButton.frame.width  - Button.Constants.screenEdgeOffset
         this.backButton.frame.posY = Video.height - this.backButton.frame.height - Button.Constants.screenEdgeOffset
     }
@@ -70,10 +71,10 @@ export class OptionsState extends State {
         video.draw(this.background, 0, 0, 0)
 
         video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.text)
-        video.writeId(Res.STR_MENU_OPCIONES, 0, Layout.titleYPosition, Surface.centerHorizontal)
+        video.writeId(StringID.menuOptions, 0, Layout.titleYPosition, Surface.centerHorizontal)
 
         video.setFont(ResourceManager.shared.fonts[FontConstants.buttonFont], Theme.text)
-        video.writeId(Res.STR_LANGUAGE_LABEL, 0, RadioLayout.startY - 28, Surface.centerHorizontal)
+        video.writeId(StringID.languageLabel, 0, RadioLayout.startY - 28, Surface.centerHorizontal)
 
         Language.all.forEach((lang, i) => {
             const rowY = RadioLayout.startY + i * RadioLayout.rowHeight

@@ -4,10 +4,11 @@ import { State } from '../State'
 import { StateMachine } from '../StateMachine'
 import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res } from '../resources/Res'
 import { Surface } from '../rendering/Surface'
 import { ConfirmationMenu, ConfirmationSelection } from '../gui/ConfirmationMenu'
 import type { Video } from '../rendering/Video'
+import { ImageID } from '../resources/ImageID'
+import { StringID } from '../resources/StringID'
 
 export class ExitState extends State {
 
@@ -16,8 +17,8 @@ export class ExitState extends State {
     constructor(sm: StateMachine) { super(sm) }
 
     start(): void {
-        this.background  = ResourceManager.shared.getImageSync(Res.IMG_SPLASH)
-        this.confirmMenu = new ConfirmationMenu(Res.STR_CONFIRMACION_SALIR, Res.STR_NO, Res.STR_SI)
+        this.background  = ResourceManager.shared.getImageSync(ImageID.splash)
+        this.confirmMenu = new ConfirmationMenu(StringID.exitConfirmation, StringID.no, StringID.yes)
         this.confirmMenu.setPosition(0, 0, Surface.centerHorizontal | Surface.centerVertical)
     }
 

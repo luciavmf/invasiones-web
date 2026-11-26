@@ -4,7 +4,6 @@ import { State } from '../State'
 import { StateMachine } from '../StateMachine'
 import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res } from '../resources/Res'
 import { FontConstants } from '../Definitions'
 import { Surface } from '../rendering/Surface'
 import { Video } from '../rendering/Video'
@@ -12,6 +11,9 @@ import { Mouse } from '../input/Mouse'
 import { Sound } from '../audio/Sound'
 import { Menu } from '../gui/Menu'
 import type { Video as VideoType } from '../rendering/Video'
+import { ImageID } from '../resources/ImageID'
+import { SoundID } from '../audio/Sound'
+import { StringID } from '../resources/StringID'
 
 const ITEM_NEW_GAME = 0
 const ITEM_HELP     = 1
@@ -37,17 +39,17 @@ export class MainMenuState extends State {
     }
 
     start(): void {
-        this.background = ResourceManager.shared.getImageSync(Res.IMG_SPLASH)
+        this.background = ResourceManager.shared.getImageSync(ImageID.splash)
 
-        Mouse.shared.setCursor(ResourceManager.shared.getImageSync(Res.IMG_CURSOR))
+        Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.cursor))
         Mouse.shared.showCursor()
 
         const m = new Menu(null, 5, 0, Video.height - MENU_Y_OFFSET, Surface.centerHorizontal)
-        m.addItem(ITEM_NEW_GAME, Res.STR_MENU_NUEVO_JUEGO, Menu.Constants.itemVisible)
-        m.addItem(ITEM_HELP,    Res.STR_MENU_AYUDA,        Menu.Constants.itemVisible)
-        m.addItem(ITEM_OPTIONS, Res.STR_MENU_OPCIONES,     Menu.Constants.itemVisible)
-        m.addItem(ITEM_CREDITS, Res.STR_MENU_CREDITOS,     Menu.Constants.itemVisible)
-        m.addItem(ITEM_QUIT,    Res.STR_MENU_SALIR,        Menu.Constants.itemVisible)
+        m.addItem(ITEM_NEW_GAME, StringID.menuNewGame, Menu.Constants.itemVisible)
+        m.addItem(ITEM_HELP,    StringID.menuHelp,        Menu.Constants.itemVisible)
+        m.addItem(ITEM_OPTIONS, StringID.menuOptions,     Menu.Constants.itemVisible)
+        m.addItem(ITEM_CREDITS, StringID.menuCredits,     Menu.Constants.itemVisible)
+        m.addItem(ITEM_QUIT,    StringID.menuExit,        Menu.Constants.itemVisible)
 
         if (this.firstBuild) {
             this.firstBuild  = false
@@ -59,8 +61,8 @@ export class MainMenuState extends State {
         m.font   = ResourceManager.shared.fonts[FontConstants.menuFont]
         this.menu = m
 
-        Sound.shared.stop(Res.SFX_BATALLA)
-        Sound.shared.play(Res.SFX_SPLASH, -1)
+        Sound.shared.stop(SoundID.battle)
+        Sound.shared.play(SoundID.splash, -1)
     }
 
     update(): void {

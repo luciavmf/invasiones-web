@@ -1,13 +1,14 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res }         from '../resources/Res'
 import { GameText }    from '../resources/GameText'
 import { Tips }        from '../gui/Tips'
 import { Video }       from '../rendering/Video'
 import { FontIndex, GameColor } from '../Definitions'
 import type { Unit }   from '../units/Unit'
 import type { Video as VideoType } from '../rendering/Video'
+import { ImageID } from '../resources/ImageID'
+import { StringID } from '../resources/StringID'
 
 export class Hud {
 
@@ -25,7 +26,7 @@ export class Hud {
         attrsArgentineCountX: 570,
     }
 
-    private image = ResourceManager.shared.getImageSync(Res.IMG_HUD)
+    private image = ResourceManager.shared.getImageSync(ImageID.hud)
     private unitToShow: Unit | null = null
     enemyCount    = 0
     argentineCount = 0
@@ -68,17 +69,16 @@ export class Hud {
         video.write(uni.name, Hud.C.avatarNameX, this.posY + Hud.C.avatarNameY, 0)
 
         video.setColor(GameColor.black)
-        const s = GameText.strings
         const sY = this.posY + Hud.C.attrsStartY
         const l  = this.lineSpacing
 
-        video.write(`${s[Res.STR_ALCANCE] ?? ''}: ${uni.range}`,         Hud.C.attrsStartX1, sY,     0)
-        video.write(`${s[Res.STR_PUNTERIA] ?? ''}: ${uni.aim}`,          Hud.C.attrsStartX1, sY + l, 0)
-        video.write(`${s[Res.STR_PUNTOS_DE_ATAQUE] ?? ''}: ${uni.attackPoints}`,
+        video.write(`${GameText.text(StringID.range)}: ${uni.range}`,         Hud.C.attrsStartX1, sY,     0)
+        video.write(`${GameText.text(StringID.aim)}: ${uni.aim}`,          Hud.C.attrsStartX1, sY + l, 0)
+        video.write(`${GameText.text(StringID.attackPoints)}: ${uni.attackPoints}`,
                                                                           Hud.C.attrsStartX2, sY,     0)
-        video.write(`${s[Res.STR_PUNTOS_DE_RESISTENCIA] ?? ''}: ${uni.health}/${uni.resistancePoints}`,
+        video.write(`${GameText.text(StringID.resistancePoints)}: ${uni.health}/${uni.resistancePoints}`,
                                                                           Hud.C.attrsStartX2, sY + l, 0)
-        video.write(`${s[Res.STR_VELOCIDAD] ?? ''}: ${uni.defaultSpeed}`, Hud.C.attrsStartX3, sY,     0)
-        video.write(`${s[Res.STR_VISIBILIDAD] ?? ''}: ${uni.visibility}`, Hud.C.attrsStartX3, sY + l, 0)
+        video.write(`${GameText.text(StringID.speed)}: ${uni.defaultSpeed}`, Hud.C.attrsStartX3, sY,     0)
+        video.write(`${GameText.text(StringID.visibility)}: ${uni.visibility}`, Hud.C.attrsStartX3, sY + l, 0)
     }
 }

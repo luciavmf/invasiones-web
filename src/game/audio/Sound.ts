@@ -1,10 +1,23 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
-import { Res } from '../resources/Res'
+
+/// A sound effect, by its position in the `sonidos.sfx` list of `data/res.json`.
+/// Named as in the macOS port (SoundID in Sound.swift).
+export const SoundID = {
+    splash:        0,
+    patricioShot:  1,
+    britishShot:   2,
+    patricioDeath: 3,
+    battle:        4,
+} as const
+export type SoundID = typeof SoundID[keyof typeof SoundID]
+
+/// The number of sound effects.
+export const soundCount = Object.keys(SoundID).length
 
 /// Plays sound effects. `Sound` provides it in the game; tests use a fake that records calls.
 export interface SoundPlayer {
-    play(id: number, loop?: number): void
+    play(id: SoundID, loop?: number): void
 }
 
 /// Singleton for playing sound effects and background music via HTMLAudioElement.
@@ -12,7 +25,7 @@ export class Sound implements SoundPlayer {
 
     static readonly shared = new Sound()
 
-    private sfx: (HTMLAudioElement | null)[] = new Array(Res.SFX_COUNT).fill(null)
+    private sfx: (HTMLAudioElement | null)[] = new Array(soundCount).fill(null)
 
     private constructor() {}
 
@@ -25,14 +38,14 @@ export class Sound implements SoundPlayer {
             base + 'patricio_muerto.wav',
             base + 'TOS-rbattle.ogg',
         ]
-        for (let i = 0; i < Res.SFX_COUNT; i++) {
+        for (let i = 0; i < soundCount; i++) {
             const audio = new Audio(paths[i])
             audio.preload = 'auto'
             this.sfx[i] = audio
         }
     }
 
-    play(id: number, loop = 0): void {
+    play(id: SoundID, loop = 0): void {
         const audio = this.sfx[id]
         if (!audio) return
         audio.loop = loop === -1

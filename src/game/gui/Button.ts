@@ -8,6 +8,7 @@ import { Video } from '../rendering/Video'
 import { Mouse, MOUSE_LEFT } from '../input/Mouse'
 import type { GameFont } from '../resources/GameFont'
 import type { Video as VideoType } from '../rendering/Video'
+import type { StringID } from '../resources/StringID'
 
 export class Button {
 
@@ -19,10 +20,10 @@ export class Button {
 
     frame = new Frame(Button.Constants.defaultWidth, Button.Constants.defaultHeight)
     font:  GameFont | null
-    label: number
+    label: StringID
     isUnderCursor = false
 
-    constructor(label: number, font: GameFont | null) {
+    constructor(label: StringID, font: GameFont | null) {
         this.label = label
         this.font  = font ?? ResourceManager.shared.fonts[FontConstants.buttonFont]
     }

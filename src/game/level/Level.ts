@@ -4,8 +4,8 @@ import { Objective }    from './Objective'
 import { Command, CommandKind } from './Command'
 import { AnimObject }   from './AnimObject'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res }          from '../resources/Res'
 import type { Surface } from '../rendering/Surface'
+import { AnimationID } from '../resources/AnimationID'
 
 const MAX_BATTLES = 5
 
@@ -72,8 +72,8 @@ export class Level {
                         } else if (kind === CommandKind.trigger) {
                             const t = cmdEl.getAttribute('tipo') ?? ''
                             let animIdx = -1
-                            if (t === 'fuego1') animIdx = Res.ANIM_FUEGO_1
-                            else if (t === 'fuego2') animIdx = Res.ANIM_FUEGO_2
+                            if (t === 'fuego1') animIdx = AnimationID.fire1
+                            else if (t === 'fuego2') animIdx = AnimationID.fire2
                             if (animIdx >= 0 && ResourceManager.shared.animations[animIdx]) {
                                 const animObj = new AnimObject(
                                     ResourceManager.shared.animations[animIdx]!.clone(), iVal, jVal)

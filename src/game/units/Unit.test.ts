@@ -7,8 +7,8 @@
 import { beforeEach, describe, expect, test } from 'vitest'
 import { Unit } from './Unit'
 import { Command, CommandKind } from '../level/Command'
-import { Res } from '../resources/Res'
 import { openField, type FakeSound } from '../../test/support'
+import { SoundID } from '../audio/Sound'
 
 let makeUnit: ReturnType<typeof openField>['makeUnit']
 let sound: FakeSound
@@ -68,7 +68,7 @@ describe('attacking', () => {
 
         update(attacker, attacker.attackInterval + 1)
         expect(enemy.health).toBe(enemy.resistancePoints - 2 * attacker.attackPoints)
-        expect(sound.played.filter(id => id === Res.SFX_DISPARO_PATRICIO)).toHaveLength(2)
+        expect(sound.played.filter(id => id === SoundID.patricioShot)).toHaveLength(2)
     })
 
     test('enemy shots play the British shot sound', () => {
@@ -78,8 +78,8 @@ describe('attacking', () => {
 
         update(attacker, attacker.attackInterval + 2)
 
-        expect(sound.played).toContain(Res.SFX_DISPARO_INGLES)
-        expect(sound.played).not.toContain(Res.SFX_DISPARO_PATRICIO)
+        expect(sound.played).toContain(SoundID.britishShot)
+        expect(sound.played).not.toContain(SoundID.patricioShot)
     })
 
     test('killing the enemy ends the attack on the same frame', () => {
@@ -172,7 +172,7 @@ describe('dying', () => {
 
         unit.update()
 
-        expect(sound.played).toEqual([Res.SFX_MUERTE_PATRICIO])
+        expect(sound.played).toEqual([SoundID.patricioDeath])
     })
 
     test('a dying unit is dead after the death frames', () => {

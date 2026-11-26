@@ -15,13 +15,15 @@ import { Button }       from '../gui/Button'
 import { Surface }      from '../rendering/Surface'
 import { Video }        from '../rendering/Video'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res }          from '../resources/Res'
 import { Sound }        from '../audio/Sound'
 import { Mouse }        from '../input/Mouse'
 import { Keyboard }     from '../input/Keyboard'
 import { FontConstants, Theme, Layout, GameColor } from '../Definitions'
 import { Unit }         from '../units/Unit'
 import type { Video as VideoType } from '../rendering/Video'
+import { SoundID } from '../audio/Sound'
+import { StringID, introPages, objectiveReminders } from '../resources/StringID'
+import { tilesetCount } from '../map/TilesetID'
 
 const EpisodeState = {
     end:            -1,
@@ -75,7 +77,7 @@ export class Episode {
     get state(): EpisodeState { return this.stateValue }
 
     constructor() {
-        this.gameOverMenu = new ConfirmationMenu(Res.STR_CONTINUARJUEGO, Res.STR_NO, Res.STR_SI)
+        this.gameOverMenu = new ConfirmationMenu(StringID.playAgain, StringID.no, StringID.yes)
         this.gameOverMenu.setPosition(0, 0, Surface.centerVertical | Surface.centerHorizontal)
     }
 
@@ -117,8 +119,8 @@ export class Episode {
             if (done) {
                 this.updatePlayingState()
                 this.setNewObjective()
-                Sound.shared.stop(Res.SFX_SPLASH)
-                Sound.shared.play(Res.SFX_BATALLA, -1)
+                Sound.shared.stop(SoundID.splash)
+                Sound.shared.play(SoundID.battle, -1)
                 this.setState(EpisodeState.showIntro)
             }
         } catch (e) {
@@ -131,7 +133,7 @@ export class Episode {
     private drawLoadingState(video: VideoType): void {
         video.fillScreen(GameColor.black)
         video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
-        video.writeId(Res.STR_CARGANDO, 0, C.loadingY, Surface.centerHorizontal)
+        video.writeId(StringID.loading, 0, C.loadingY, Surface.centerHorizontal)
     }
 
     private async loadLevel(levelIdx: number): Promise<boolean> {
@@ -144,7 +146,7 @@ export class Episode {
 
         } else if (this.count === 1) {
             const res = ResourceManager.shared.resJson
-            await this.map!.load(res, Res.MAP_NIVEL1 + levelIdx)
+            await this.map!.load(res, tilesetCount + levelIdx)
             MapObject.map    = this.map
             MapObject.camera = this.camera
             const level = new Level()
@@ -155,8 +157,8 @@ export class Episode {
             await ResourceManager.shared.loadUnitTypes()
 
         } else if (this.count === 3) {
-            this.button       = new Button(Res.STR_SIGUIENTE, null)
-            this.acceptButton = new Button(Res.STR_ACEPTAR,   null)
+            this.button       = new Button(StringID.next, null)
+            this.acceptButton = new Button(StringID.accept,   null)
 
         } else if (this.count === 4) {
             this.loadPaintObjects()
@@ -180,7 +182,7 @@ export class Episode {
 
     private loadPaintObjects(): void {
         const map = this.map!
-        this.objectsToDraw.tabla = Array.from(
+        this.objectsToDraw.table = Array.from(
             { length: map.physicalMapHeight },
             () => new Array(map.physicalMapWidth).fill(null),
         )
@@ -196,8 +198,8 @@ export class Episode {
                 const obs = new Obstacle(localId, i * 2, j * 2, ts)
                 this.obstacles.push(obs)
                 const fi = i * 2, fj = j * 2
-                if (fi < this.objectsToDraw.tabla.length && fj < this.objectsToDraw.tabla[fi].length) {
-                    this.objectsToDraw.tabla[fi][fj] = obs
+                if (fi < this.objectsToDraw.table.length && fj < this.objectsToDraw.table[fi].length) {
+                    this.objectsToDraw.table[fi][fj] = obs
                 }
             }
         }
@@ -246,9 +248,8 @@ export class Episode {
         const font = this.currentPage === 0 ? FontConstants.titleFont : FontConstants.objectivesFont
         video.setFont(ResourceManager.shared.fonts[font], Theme.text)
 
-        const strIdx = Res.STR_PRIMER_BATALLA + this.currentPage +
-                       ((this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro)
-        video.writeId(strIdx, 0, -(hudH >> 1), Surface.centerVertical | Surface.centerHorizontal)
+        const page = introPages[(this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro + this.currentPage]
+        if (page) video.writeId(page, 0, -(hudH >> 1), Surface.centerVertical | Surface.centerHorizontal)
         this.button?.draw(video)
     }
 
@@ -278,14 +279,13 @@ export class Episode {
             Theme.alpha, Surface.centerVertical | Surface.centerHorizontal)
 
         video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.text)
-        video.writeId(Res.STR_OBJETIVOS, 0,
+        video.writeId(StringID.objectives, 0,
             -(hudH / 2) - C.objectivesBoxHeight / 2 + 50,
             Surface.centerVertical | Surface.centerHorizontal)
 
         video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesFont], Theme.text)
-        const strIdx = Res.STR_PRIMER_BATALLA + this.currentPage +
-                       ((this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro)
-        video.writeId(strIdx, 0, -(hudH >> 1) + 30, Surface.centerVertical | Surface.centerHorizontal)
+        const page = introPages[(this.currentLevel?.currentBattleIndex ?? 0) * C.pagesPerIntro + this.currentPage]
+        if (page) video.writeId(page, 0, -(hudH >> 1) + 30, Surface.centerVertical | Surface.centerHorizontal)
         this.acceptButton?.draw(video)
     }
 
@@ -335,11 +335,13 @@ export class Episode {
         } else if (this.showObjectiveReminder && this.objectiveShowCount > C.objectiveShowStartCount) {
             const camH = this.camera?.height ?? Video.height
             video.setFont(ResourceManager.shared.fonts[FontConstants.objectivesReminderFont], Theme.title)
-            video.writeId(Res.STR_OBJETIVOS, Layout.objectivesOffset << 1,
+            video.writeId(StringID.objectives, Layout.objectivesOffset << 1,
                 camH - (Layout.objectivesHeight + Layout.objectivesOffset * 2) - 10, 0)
-            const strIdx = Res.STR_OBJETIVO_BATALLA_1_1 + (this.currentLevel?.completedObjectiveCount ?? 0)
-            video.writeId(strIdx, Layout.objectivesOffset << 1,
-                camH - (Layout.objectivesHeight + Layout.objectivesOffset * 2) + 5, 0)
+            const reminder = objectiveReminders[this.currentLevel?.completedObjectiveCount ?? 0]
+            if (reminder) {
+                video.writeId(reminder, Layout.objectivesOffset << 1,
+                    camH - (Layout.objectivesHeight + Layout.objectivesOffset * 2) + 5, 0)
+            }
         }
 
         if (Mouse.shared.isDragging()) {
@@ -362,7 +364,7 @@ export class Episode {
             let tileX = 0, i = startCol, j = startRow
             while (tileX <= rect.w && j >= 0) {
                 if (i >= 0 && i < this.map.physicalMapHeight && j < this.map.physicalMapWidth) {
-                    const obj = this.objectsToDraw.tabla[i]?.[j]
+                    const obj = this.objectsToDraw.table[i]?.[j]
                     if (obj instanceof Unit)     obj.draw(video)
                     if (obj instanceof Obstacle) obj.draw(video)
                 }
@@ -412,7 +414,7 @@ export class Episode {
         this.drawPlayingState(video)
         this.button?.draw(video)
         video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
-        video.writeId(Res.STR_GANASTE, 0, 0, Surface.centerHorizontal | Surface.centerVertical)
+        video.writeId(StringID.youWon, 0, 0, Surface.centerHorizontal | Surface.centerVertical)
     }
 
     private updateLostState(): void {
@@ -426,7 +428,7 @@ export class Episode {
     private drawLostState(video: VideoType): void {
         this.drawPlayingState(video)
         video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], Theme.title)
-        video.writeId(Res.STR_PERDISTE, 0, -100, Surface.centerHorizontal | Surface.centerVertical)
+        video.writeId(StringID.youLost, 0, -100, Surface.centerHorizontal | Surface.centerVertical)
         if (this.count > C.countdownToRestart) this.gameOverMenu.draw(video)
     }
 

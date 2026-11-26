@@ -4,6 +4,7 @@ import * as PIXI from 'pixi.js'
 import { Surface } from './Surface'
 import type { GameFont } from '../resources/GameFont'
 import { GameText } from '../resources/GameText'
+import type { StringID } from '../resources/StringID'
 
 /// The drawing surface that represents the screen.
 /// Wraps PixiJS and exposes the same draw API as the Swift/SpriteKit port.
@@ -138,10 +139,9 @@ export class Video {
 
     // MARK: - Write text
 
-    /// Writes the string identified by its Res.STR_* index.
-    writeId(stringId: number, x: number, y: number, anchor: number): void {
-        const text = GameText.strings[stringId]
-        if (text !== undefined) this.writeText(text, x, y, anchor)
+    /// Writes a localised string.
+    writeId(stringId: StringID, x: number, y: number, anchor: number): void {
+        this.writeText(GameText.text(stringId), x, y, anchor)
     }
 
     /// Writes a string literal (dynamic text or debug output).

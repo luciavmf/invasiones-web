@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Unit }        from './Unit'
 import { Command, CommandKind } from '../level/Command'
-import type { IA }     from '../ai/IA'
+import type { AI }     from '../level/AI'
 import type { Map }    from '../map/Map'
 
 const GroupState = {
@@ -22,7 +22,7 @@ export class Group {
     static map: Map | null = null
 
     readonly id: number
-    ai: IA | null = null
+    ai: AI | null = null
     units: Unit[]
 
     private stateValue: GroupState = GroupState.waitingCommand
@@ -104,7 +104,7 @@ export class Group {
         this.setHealing(p.x, p.y)
     }
 
-    setAI(intel: IA): void {
+    setAI(intel: AI): void {
         this.ai = intel
         this.setState(GroupState.waitingCommand)
     }

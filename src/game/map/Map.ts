@@ -2,10 +2,11 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Camera }     from './Camera'
 import { Tileset }    from './Tileset'
-import { Res }        from '../resources/Res'
 import { PathFinder } from '../pathfinding/PathFinder'
 import { Mouse }      from '../input/Mouse'
 import { ResourceManager } from '../resources/ResourceManager'
+import { ImageID } from '../resources/ImageID'
+import { TilesetID, tilesetCount } from '../map/TilesetID'
 
 const MAX_LAYERS = 8
 const INFO_LAYER = 8
@@ -34,7 +35,7 @@ export class Map {
     physicalTileWidth  = 0
     physicalTileHeight = 0
 
-    tilesets: (Tileset | null)[] = new Array(Res.TLS_COUNT).fill(null)
+    tilesets: (Tileset | null)[] = new Array(tilesetCount).fill(null)
     private tilesetCount = 0
 
     tileUnderMouse:      { x: number; y: number } = { x: 0, y: 0 }
@@ -61,7 +62,7 @@ export class Map {
     }
 
     async load(resJson: any, mapId: number): Promise<void> {
-        const mapIdx = mapId - Res.TLS_COUNT  // local index within the mapas array
+        const mapIdx = mapId - tilesetCount  // local index within the mapas array
         const mapUrl = `${import.meta.env.BASE_URL}data/${resJson.escenarios.mapas[mapIdx]}`
         if (!mapUrl) throw new Error(`Map: no path for map id ${mapId}`)
 
@@ -123,7 +124,7 @@ export class Map {
         const posX = this.camera.startX + (((i - j) * this.tileWidth  / 2) >> 1) + this.camera.x + this.tileWidth  / 4
         const posY = this.camera.startY + (((i + j) * this.tileHeight / 2) >> 1) + this.camera.y
         if (semiTransparent) {
-            const grey = ResourceManager.shared.getImageSync(Res.IMG_TILE_GRIS)
+            const grey = ResourceManager.shared.getImageSync(ImageID.greyTile)
             video.draw(grey, posX, posY, 128, 0)
         }
     }
@@ -196,7 +197,7 @@ export class Map {
         if (x >= this.physicalTilesLayer.length) return false
         if (y >= this.physicalTilesLayer[x].length) return false
         const id = this.physicalTilesLayer[x][y]
-        return id === Res.TLS_PASTO || id === Res.TLS_TIERRA
+        return id === TilesetID.grass || id === TilesetID.dirt
     }
 
     getLineOfSightPosition(x1: number, x2: number, y1: number, y2: number): { x: number; y: number } {
@@ -219,7 +220,7 @@ export class Map {
 
     invalidateTile(x: number, y: number): void {
         if (x < 0 || y < 0 || x + 1 >= this.width * 2 || y + 1 >= this.height * 2) return
-        const v = Res.TLS_ARBOLES
+        const v = TilesetID.trees
         this.physicalTilesLayer[x][y]         = v
         this.physicalTilesLayer[x + 1][y]     = v
         this.physicalTilesLayer[x + 1][y + 1] = v
@@ -383,7 +384,7 @@ export class Map {
                 for (let j = 0; j < this.height; j++) {
                     const tileId = this.mapData[layer]?.[i]?.[j] ?? 0
                     const ts = this.getTileset(tileId)
-                    if (!ts || ts.id === Res.TLS_UNIDADES) continue
+                    if (!ts || ts.id === TilesetID.units) continue
                     const tsId = ts.id
                     this.mapData[INFO_LAYER][i][j] = tsId
                     const ci = i * 2, cj = j * 2

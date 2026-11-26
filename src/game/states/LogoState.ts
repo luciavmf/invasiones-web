@@ -4,9 +4,9 @@ import { State } from '../State'
 import { StateMachine } from '../StateMachine'
 import { GameStateKey } from '../GameFrame'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res } from '../resources/Res'
 import { GameColor } from '../Definitions'
 import type { Video } from '../rendering/Video'
+import { ImageID } from '../resources/ImageID'
 
 export class LogoState extends State {
 
@@ -23,7 +23,7 @@ export class LogoState extends State {
 
     update(): void {
         if (this.count === 0) {
-            this.background = ResourceManager.shared.getImageSync(Res.IMG_LOGO)
+            this.background = ResourceManager.shared.getImageSync(ImageID.logo)
             this.alpha = 10
         } else if (this.count > this.logoStartTick + this.logoEndTick) {
             this.stateMachine.setNextState(GameStateKey.mainMenu)

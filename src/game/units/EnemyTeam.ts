@@ -2,13 +2,14 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Player }  from './Player'
 import { Group }   from './Group'
-import { IA }      from '../ai/IA'
-import { Res }     from '../resources/Res'
+import { AI }      from '../level/AI'
 import { Mouse }   from '../input/Mouse'
 import type { Map }          from '../map/Map'
 import type { Camera }       from '../map/Camera'
 import type { ObjectTable }  from '../level/ObjectTable'
 import type { Hud }          from '../level/Hud'
+import { TileKind, TilesetID } from '../map/TilesetID'
+import { UnitType } from '../resources/UnitType'
 
 /// The AI-controlled enemy faction.
 export class EnemyTeam extends Player {
@@ -29,7 +30,7 @@ export class EnemyTeam extends Player {
     override async loadUnits(levelIndex: number): Promise<void> {
         const unitsTileset = this.map.tilesets
             .filter(ts => ts !== null)
-            .find(ts => ts!.id === Res.TLS_UNIDADES)
+            .find(ts => ts!.id === TilesetID.units)
         if (!unitsTileset) return
 
         this.units = []
@@ -41,16 +42,16 @@ export class EnemyTeam extends Player {
 
                 const localId = tileId - unitsTileset.firstGid
                 const tile    = unitsTileset.tiles[localId]
-                if (!tile || tile.id !== Res.TILE_UNIDADES_ID_INGLES) continue
+                if (!tile || tile.kind !== TileKind.british) continue
 
-                const list = this.placeUnits(Res.UNIDAD_INGLES, tile.count, i << 1, j << 1)
+                const list = this.placeUnits(UnitType.british, tile.count, i << 1, j << 1)
 
                 if (list.length > 1) {
                     if (!this.groups) this.groups = []
                     const newGroup = new Group(list)
-                    const ia = new IA()
-                    await ia.load(i, j, levelIndex)
-                    newGroup.setAI(ia)
+                    const ai = new AI()
+                    await ai.load(i, j, levelIndex)
+                    newGroup.setAI(ai)
                     this.groups.push(newGroup)
                 } else {
                     list.forEach(u => u.patrol())

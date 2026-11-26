@@ -5,8 +5,10 @@ import { Surface } from '../rendering/Surface'
 import { GameFont } from './GameFont'
 import { Animation } from '../sprites/Animation'
 import { Sprite } from '../sprites/Sprite'
-import { Res } from './Res'
 import { FontIndex } from '../Definitions'
+import { FontFamily, type ImageID } from './ImageID'
+import { SpriteID, spriteCount } from './UnitType'
+import { animationCount } from './AnimationID'
 
 /// Singleton that loads and caches all game resources from /data/.
 /// Replaces file-system paths with fetch() URLs served by Vite / Netlify.
@@ -14,7 +16,7 @@ export class ResourceManager {
 
     static readonly shared = new ResourceManager()
 
-    private imageById   = new Map<number, Surface>()
+    private imageById   = new Map<ImageID, Surface>()
     private imageByName = new Map<string, Surface>()
 
     fonts:      (GameFont | null)[] = []
@@ -54,18 +56,18 @@ export class ResourceManager {
     async preloadImages(): Promise<void> {
         await Promise.all(
             this.imagePaths.map((_, i) =>
-                this.getImage(i).catch(e => console.warn('preloadImages: failed to load image', i, e))
+                this.getImage(i as ImageID).catch(e => console.warn('preloadImages: failed to load image', i, e))
             )
         )
     }
 
-    /// Returns a cached image by Res.IMG_* id. Returns null if not yet preloaded.
-    getImageSync(id: number): Surface | null {
+    /// Returns a cached image by its ID. Returns null if not yet preloaded.
+    getImageSync(id: ImageID): Surface | null {
         return this.imageById.get(id) ?? null
     }
 
-    /// Loads (and caches) an image by its Res.IMG_* id.
-    async getImage(id: number): Promise<Surface | null> {
+    /// Loads (and caches) an image by its ID.
+    async getImage(id: ImageID): Promise<Surface | null> {
         const cached = this.imageById.get(id)
         if (cached) return cached
 
@@ -100,7 +102,7 @@ export class ResourceManager {
 
         this.fonts = new Array(FontIndex.total).fill(null)
 
-        const lblackUrl = this.fontPaths[Res.FNT_LBLACK]
+        const lblackUrl = this.fontPaths[FontFamily.lblack]
         await GameFont.load('LBlack', lblackUrl, 14)
 
         // FreeSans is replaced by the browser's built-in sans-serif.
@@ -120,9 +122,9 @@ export class ResourceManager {
     // MARK: - Animations
 
     async loadAnimations(): Promise<void> {
-        this.animations = new Array(Res.ANIM_COUNT).fill(null)
+        this.animations = new Array(animationCount).fill(null)
         await Promise.all(
-            this.animConfigs.slice(0, Res.ANIM_COUNT).map(async (cfg: any, i: number) => {
+            this.animConfigs.slice(0, animationCount).map(async (cfg: any, i: number) => {
                 const url = `/data/${cfg.imagepath}`
                 const surface = await this.getImageByPath(cfg.imagepath)
                 if (!surface) return
@@ -142,9 +144,9 @@ export class ResourceManager {
 
     async loadSprites(): Promise<void> {
         if (this.sprites.length > 0) return
-        this.sprites = new Array(Res.SPR_COUNT).fill(null)
+        this.sprites = new Array(spriteCount).fill(null)
 
-        for (let idx = 0; idx < this.spriteConfigs.length && idx < Res.SPR_COUNT; idx++) {
+        for (let idx = 0; idx < this.spriteConfigs.length && idx < spriteCount; idx++) {
             const cfg = this.spriteConfigs[idx]
             const sprite = new Sprite()
             const animpaks: (Animation | null)[] = []
@@ -207,7 +209,7 @@ export class ResourceManager {
                             data.avatar = await this.getImageByPath(val)
                             break
                         case 'Sprite':
-                            data.spriteIdx = val === 'patricio' ? Res.SPR_PATRICIO : Res.SPR_INGLES
+                            data.spriteIdx = val === 'patricio' ? SpriteID.patricio : SpriteID.british
                             break
                     }
                 }

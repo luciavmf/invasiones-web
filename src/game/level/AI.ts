@@ -9,7 +9,7 @@ class Battle {
 }
 
 /// Scripted AI controller for an enemy group.
-export class IA {
+export class AI {
 
     private battles: Battle[] = Array.from({ length: MAX_BATTLES }, () => new Battle())
     private battleCount  = 0
@@ -19,7 +19,7 @@ export class IA {
         const url = `${import.meta.env.BASE_URL}data/nivel/orden_nv${levelIndex}_${x}_${y}.xml`
         try {
             const resp = await fetch(url)
-            if (!resp.ok) { console.debug(`IA: file not found: ${url}`); return }
+            if (!resp.ok) { console.debug(`AI: file not found: ${url}`); return }
             const text = await resp.text()
             const doc  = new DOMParser().parseFromString(text, 'application/xml')
 
@@ -44,7 +44,7 @@ export class IA {
                 this.battleCount++
             }
         } catch (e) {
-            console.debug(`IA: error loading ${url}`, e)
+            console.debug(`AI: error loading ${url}`, e)
         }
     }
 

@@ -2,8 +2,13 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Res } from '../resources/Res'
 
+/// Plays sound effects. `Sound` provides it in the game; tests use a fake that records calls.
+export interface SoundPlayer {
+    play(id: number, loop?: number): void
+}
+
 /// Singleton for playing sound effects and background music via HTMLAudioElement.
-export class Sound {
+export class Sound implements SoundPlayer {
 
     static readonly shared = new Sound()
 

@@ -25,7 +25,8 @@ export class PathFinder {
 
     private map: Map | null = null
 
-    private constructor() {}
+    /// The game uses `shared`; tests create their own on a hand-made grid.
+    constructor() {}
 
     loadMap(map: Map): void {
         this.map = map

@@ -81,14 +81,22 @@ export class ArgentineTeam extends Player {
         }
     }
 
-    drawOrientationArrow(video: VideoType): void {
+    /// Draws the destination arrow of the last move order (for 100 frames), the objective
+    /// ring, the object to take and the fires. As in the original, they're drawn with the
+    /// units, so the fog and the HUD cover them, and the arrow's frames are counted here.
+    drawMarkers(video: VideoType): void {
         if (this.stateValue !== 'game') return
+        if (this.count_ < this.arrowMaxCount) this.arrowObj?.draw(video)
+        this.count_++
+
         this.ring?.draw(video)
         this.objectToTake?.draw(video)
         this.fireEffects?.forEach(f => f.draw(video))
+    }
 
-        if (this.count_ < this.arrowMaxCount) this.arrowObj?.draw(video)
-
+    /// Draws the arrow at the edge of the screen pointing at the objective, when it's off-screen.
+    drawOrientationArrow(video: VideoType): void {
+        if (this.stateValue !== 'game') return
         if (!this.command || !this.orientationArrow) return
         if (this.isObjectiveVisible()) return
         this.orientationArrow.draw(video, this.arrowPos.x, this.arrowPos.y, 0)
@@ -140,7 +148,6 @@ export class ArgentineTeam extends Player {
         this.updateObjectives()
         this.removeDeadUnits()
         this.arrowObj?.update()
-        this.count_++
     }
 
     private updateOrientationArrow(): void {

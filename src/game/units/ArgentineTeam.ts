@@ -8,6 +8,9 @@ import { MapObject }  from '../level/MapObject'
 import { Animation }  from '../sprites/Animation'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Mouse }      from '../input/Mouse'
+import type { PointerDevice } from '../input/PointerDevice'
+import { PlayerInput } from './PlayerInput'
+import type { PlayerIntent } from './PlayerIntent'
 import { Video }      from '../rendering/Video'
 import { CommandKind } from '../level/Command'
 import type { Map }    from '../map/Map'
@@ -23,7 +26,8 @@ import { UnitType } from '../resources/UnitType'
 /// The player-controlled Argentine faction.
 export class ArgentineTeam extends Player {
 
-    private unitUnderMouse: Unit | null = null
+    private unitUnderPointer: Unit | null = null
+    private readonly input: PlayerInput
     private count_         = 99999
     private arrowObj: MapObject | null  = null
     private orientationArrow: Animation | null = null
@@ -32,8 +36,10 @@ export class ArgentineTeam extends Player {
     private unitToFindIdx    = 0
     private readonly arrowMaxCount = 100
 
-    constructor(map: Map, camera: Camera, objectsToDraw: ObjectTable, hud: Hud) {
+    constructor(map: Map, camera: Camera, objectsToDraw: ObjectTable, hud: Hud,
+                pointer: PointerDevice = Mouse.shared) {
         super(map, camera, objectsToDraw, hud)
+        this.input = new PlayerInput(map, pointer)
         this.faction = 'argentine'
 
         const anims = ResourceManager.shared.animations
@@ -135,14 +141,18 @@ export class ArgentineTeam extends Player {
         this.objectToTake?.update()
         this.ring?.update()
 
-        this.unitUnderMouse = this.getUnitUnderMouse()
-        this.selectedUnits  = []
+        const { x, y } = this.input.position
+        this.unitUnderPointer = this.unitAt(x, y)
+        this.selectedUnits    = []
 
-        this.selectUnitsInDragRect()
+        const selection = this.input.dragSelection()
+        if (selection) this.handle(selection)
         this.updateUnits()
-        this.createGroups()
-        this.checkUnitOrders()
-        this.updateCursor()
+        this.input.clickIntents(this.unitUnderPointer, this.hasSelection).forEach(i => this.handle(i))
+
+        const hadSelection = this.hasSelection
+        if (this.selectedUnit?.isDead()) this.clearSelection()
+        this.input.show(this.input.cursor(this.unitUnderPointer, hadSelection, this.selectionNeedsHealing))
 
         this.fireEffects?.forEach(f => f.update())
         this.updateGroups()
@@ -204,7 +214,8 @@ export class ArgentineTeam extends Player {
                this.commandTargetPos.y < this.camera.height
     }
 
-    private getUnitUnderMouse(): Unit | null {
+    /// The unit drawn at a screen point, searching the visible tiles in drawing order.
+    unitAt(x: number, y: number): Unit | null {
         const rect = this.getPaintCoordinates()
         let startCol = rect.x, startRow = rect.y
         let tileY = 0, toggle = true
@@ -214,7 +225,7 @@ export class ArgentineTeam extends Player {
             while (tileX <= rect.w && j >= 0) {
                 if (i >= 0 && i < this.map.physicalMapHeight && j < this.map.physicalMapWidth) {
                     const obj = this.objectsToDraw.table[i]?.[j]
-                    if (obj instanceof Unit && obj.isUnderMouse()) return obj
+                    if (obj instanceof Unit && obj.isUnder(x, y)) return obj
                 }
                 tileX++; i++; j--
             }
@@ -225,68 +236,59 @@ export class ArgentineTeam extends Player {
         return null
     }
 
-    private checkUnitOrders(): void {
-        const lb = Mouse.Constants.leftButton
-        const rb = Mouse.Constants.rightButton
-
-        if (Mouse.shared.pressedButtons.has(lb)) {
-            const um = this.unitUnderMouse
-            if (um && um.faction === 'argentine') {
-                const dr = Mouse.shared.dragRect
-                const isDragging = Mouse.shared.isDragging() && dr.width >= 4 && dr.height >= 4
-                if (!isDragging) {
-                    this.clearSelection()
-                    um.isSelected = true
-                    this.hud.selectedUnit = um
-                    this.selectedUnit = um
-                    if (um.belongsToGroup) { um.myGroup?.removeUnit(um); um.leaveGroup() }
-                    Mouse.shared.releaseButton(lb)
+    /// Carries out one request from the player.
+    handle(intent: PlayerIntent): void {
+        switch (intent.kind) {
+            case 'selectInRect': {
+                if (this.selectedUnit || this.selectedGroup) return
+                for (const u of this.units) {
+                    if (u.faction === 'argentine') u.selectIfInRect(intent.x, intent.y, intent.w, intent.h)
                 }
+                this.collectSelectedUnits()
+                this.createGroups()
+                break
             }
-        }
-
-        if (!this.selectedUnit && !this.selectedGroup) return
-
-        if (Mouse.shared.pressedButtons.has(rb)) {
-            Mouse.shared.releaseButton(rb)
-            const tile = this.map.smallTileUnderMouse
-
-            if (this.map.isWalkable(tile.x, tile.y)) {
-                const um = this.unitUnderMouse
-                if (um && um.faction === 'enemy' && !um.isDead()) {
-                    if (this.selectedGroup) this.selectedGroup.attack(um)
-                    else this.selectedUnit?.attack(um)
-                } else {
-                    if (this.selectedGroup) this.selectedGroup.move(tile.x, tile.y)
-                    else this.selectedUnit?.move(tile.x, tile.y)
-                    this.count_ = 0
-                    this.arrowObj?.setTilePosition(tile.x, tile.y)
-                }
-            } else {
-                const tum = this.map.tileUnderMouse
-                if (tum.y >= this.map.height || tum.y < 0 || tum.x >= this.map.width || tum.x < 0) return
-                const btId = this.map.buildingsLayer[tum.x]?.[tum.y] ?? 0
-                if (!btId) return
-                const ts = this.map.getTileset(btId)
-                if (!ts) return
-                const localId = btId - ts.firstGid
-                const tp = ts.tiles[localId]
-                if (!tp || ts.id !== TilesetID.invalidated || tp.kind !== TileKind.infirmary) return
-
-                const sg = this.selectedGroup, su = this.selectedUnit
-                if (sg && sg.health < sg.resistancePoints) sg.heal(tile.x, tile.y)
-                else if (su && su.health < su.resistancePoints) su.heal(tile.x, tile.y)
+            case 'select': {
+                const unit = intent.unit
+                if (unit.faction !== 'argentine') return
+                this.clearSelection()
+                unit.isSelected = true
+                this.hud.selectedUnit = unit
+                this.selectedUnit = unit
+                // A unit picked out of a group leaves it.
+                if (unit.belongsToGroup) { unit.myGroup?.removeUnit(unit); unit.leaveGroup() }
+                break
             }
-        }
-
-        if (Mouse.shared.pressedButtons.has(lb)) {
-            const dr = Mouse.shared.dragRect
-            const isDragging = Mouse.shared.isDragging() && dr.width >= 4 && dr.height >= 4
-            if (!isDragging) {
+            case 'deselect':
                 this.selectedUnits.forEach(u => u.isSelected = false)
                 this.clearSelection()
+                break
+            case 'move':
+                if (this.selectedGroup) this.selectedGroup.move(intent.x, intent.y)
+                else this.selectedUnit?.move(intent.x, intent.y)
+                this.count_ = 0
+                this.arrowObj?.setTilePosition(intent.x, intent.y)
+                break
+            case 'attack':
+                if (this.selectedGroup) this.selectedGroup.attack(intent.enemy)
+                else this.selectedUnit?.attack(intent.enemy)
+                break
+            case 'heal': {
+                const sg = this.selectedGroup, su = this.selectedUnit
+                if (sg && sg.health < sg.resistancePoints) sg.heal(intent.x, intent.y)
+                else if (su && su.health < su.resistancePoints) su.heal(intent.x, intent.y)
+                break
             }
         }
+    }
+
+    /// Whether a unit or group is selected.
+    get hasSelection(): boolean { return this.selectedUnit !== null || this.selectedGroup !== null }
+
+    /// Whether the selected unit or group has lost health, so it can be sent to heal.
+    get selectionNeedsHealing(): boolean {
+        return (this.selectedUnit ? this.selectedUnit.health < this.selectedUnit.resistancePoints : false)
+            || (this.selectedGroup ? this.selectedGroup.health < this.selectedGroup.resistancePoints : false)
     }
 
     private createGroups(): void {
@@ -329,50 +331,11 @@ export class ArgentineTeam extends Player {
         }
     }
 
-    private updateCursor(): void {
-        Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.cursor))
-
-        if (!this.selectedUnit && !this.selectedGroup) return
-
-        if (this.unitUnderMouse?.faction === 'enemy') {
-            Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.swordCursor))
-        }
-
-        if (this.selectedUnit?.isDead()) this.clearSelection()
-
-        const tum = this.map.tileUnderMouse
-        if (tum.y >= this.map.height || tum.y < 0 || tum.x >= this.map.width || tum.x < 0) return
-        const btId = this.map.buildingsLayer[tum.x]?.[tum.y] ?? 0
-        if (!btId) return
-        const ts = this.map.getTileset(btId)
-        if (!ts) return
-        const localId = btId - ts.firstGid
-        const tp = ts.tiles[localId]
-        if (!tp || ts.id !== TilesetID.invalidated || tp.kind !== TileKind.infirmary) return
-
-        const needsHeal = (this.selectedUnit ? this.selectedUnit.health < this.selectedUnit.resistancePoints : false)
-                       || (this.selectedGroup ? this.selectedGroup.health < this.selectedGroup.resistancePoints : false)
-        if (needsHeal) Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.infirmaryCursor))
-    }
-
     private updateObjectives(): void {
         if (!this.someoneCompletedOrder) return
         if (this.command?.id === CommandKind.takeObject) this.objectToTake = null
         this.setNextCommand()
         if (!this.command) this.objectiveCompleted = true
-    }
-
-    private selectUnitsInDragRect(): void {
-        if (!Mouse.shared.didFinishDragging()) return
-        const dr = Mouse.shared.dragRect
-        if (dr.width < 4 || dr.height < 4) return
-        if (this.selectedUnit || this.selectedGroup) return
-
-        for (const u of this.units) {
-            if (u.faction === 'argentine') {
-                u.selectIfInRect(Math.trunc(dr.x), Math.trunc(dr.y), Math.trunc(dr.width), Math.trunc(dr.height))
-            }
-        }
     }
 
     private calcFirstTile(x: number, y: number): { x: number; y: number } {

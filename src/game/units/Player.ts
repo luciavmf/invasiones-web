@@ -30,6 +30,9 @@ export class Player {
     groups: Group[] | null = null
     stateValue: 'start' | 'loading' | 'game' = 'start'
     camera: Camera
+    /// A drag selects at most this many units, as in the original.
+    static readonly maxSelectedUnits = 6
+
     selectedUnits: Unit[] = []
     protected deadUnits: Unit[] | null = null
     protected visibleUnits: Unit[] | null = null
@@ -98,21 +101,26 @@ export class Player {
         this.units.forEach(u => u.setObjectiveCommand(this.command))
     }
 
+    /// Collects the units marked as selected into `selectedUnits`, up to `maxSelectedUnits`;
+    /// the rest are unmarked. Does nothing while a unit or group is already selected.
+    collectSelectedUnits(): void {
+        if (this.selectedUnit || this.selectedGroup) return
+        for (const unit of this.units) {
+            if (!unit.isSelected) continue
+            if (this.selectedUnits.length < Player.maxSelectedUnits) {
+                this.hud.selectedUnit = unit
+                this.selectedUnits.push(unit)
+            } else {
+                unit.isSelected = false
+            }
+        }
+    }
+
     updateUnits(): void {
         this.deadUnits = null
-        const checkSelection = !this.selectedUnit && !this.selectedGroup
 
         for (const unit of this.units) {
             this.updateAndMoveUnit(unit)
-
-            if (checkSelection && unit.isSelected) {
-                if (this.selectedUnits.length < 6) {
-                    this.hud.selectedUnit = unit
-                    this.selectedUnits.push(unit)
-                } else {
-                    unit.isSelected = false
-                }
-            }
 
             this.visibleUnits = this.getVisibleUnitsAndTiles(unit)
 

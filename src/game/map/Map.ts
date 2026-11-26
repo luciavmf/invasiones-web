@@ -6,7 +6,7 @@ import { PathFinder } from '../pathfinding/PathFinder'
 import { Mouse }      from '../input/Mouse'
 import { ResourceManager } from '../resources/ResourceManager'
 import { ImageID } from '../resources/ImageID'
-import { TilesetID, tilesetCount } from '../map/TilesetID'
+import { TileKind, TilesetID, tilesetCount } from './TilesetID'
 
 const MAX_LAYERS = 8
 const INFO_LAYER = 8
@@ -38,8 +38,6 @@ export class Map {
     tilesets: (Tileset | null)[] = new Array(tilesetCount).fill(null)
     private tilesetCount = 0
 
-    tileUnderMouse:      { x: number; y: number } = { x: 0, y: 0 }
-    smallTileUnderMouse: { x: number; y: number } = { x: 0, y: 0 }
 
     physicalTilesLayer: number[][] = []
     visibleTilesLayer:  number[][] = []
@@ -179,8 +177,6 @@ export class Map {
                 cam.x -= cam.speed
             }
         }
-
-        this.updateMouseCoords()
     }
 
     getTileset(tileId: number): Tileset | null {
@@ -218,15 +214,12 @@ export class Map {
         return { x: Math.trunc(a - b) - 2, y: Math.trunc(a + b) - 1 }
     }
 
-    private updateMouseCoords(): void {
-        if (!this.mapLoaded) return
-        const p = this.tileFromXY(Math.trunc(Mouse.shared.x), Math.trunc(Mouse.shared.y))
-        this.tileUnderMouse = p
-    }
-
-    private tileFromXY(x: number, y: number): { x: number; y: number } {
+    /// The map tile and the physical tile (2× resolution) under a screen point.
+    tiles(x: number, y: number): { tile: { x: number; y: number }; physicalTile: { x: number; y: number } } {
         const cam = this.camera
-        if (this.tileHeight === 0 || this.tileWidth === 0) return { x: 0, y: 0 }
+        if (!this.mapLoaded || this.tileHeight === 0 || this.tileWidth === 0) {
+            return { tile: { x: 0, y: 0 }, physicalTile: { x: 0, y: 0 } }
+        }
         const a = Math.trunc((y - cam.y - cam.startY) / this.tileHeight)
         const b = x - cam.x > 0
             ? Math.trunc((x - cam.x - cam.startX) / this.tileWidth)
@@ -235,8 +228,17 @@ export class Map {
         const bF = x - cam.x > 0
             ? Math.trunc((x - cam.x - cam.startX) / this.physicalTileWidth)
             : Math.trunc((x - cam.x - cam.startX - this.physicalTileWidth) / this.physicalTileWidth)
-        this.smallTileUnderMouse = { x: aF + bF, y: aF - bF }
-        return { x: a + b, y: a - b }
+        return { tile: { x: a + b, y: a - b }, physicalTile: { x: aF + bF, y: aF - bF } }
+    }
+
+    /// Whether a map tile is part of an infirmary.
+    isInfirmary(x: number, y: number): boolean {
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height) return false
+        const tileId = this.buildingsLayer[x]?.[y] ?? 0
+        if (!tileId) return false
+        const ts = this.getTileset(tileId)
+        if (!ts || ts.id !== TilesetID.invalidated) return false
+        return ts.tiles[tileId - ts.firstGid]?.kind === TileKind.infirmary
     }
 
     // MARK: - TMX loading (async)

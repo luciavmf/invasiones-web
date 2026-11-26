@@ -5,7 +5,6 @@ import { Command, CommandKind } from '../level/Command'
 import { PathFinder, type WalkableGrid } from '../pathfinding/PathFinder'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Sound, type SoundPlayer } from '../audio/Sound'
-import { Mouse }       from '../input/Mouse'
 import { Sprite }      from '../sprites/Sprite'
 import type { Surface } from '../rendering/Surface'
 import type { Video }   from '../rendering/Video'
@@ -308,9 +307,8 @@ export class Unit extends MapObject {
                Math.abs(y - this.physicalTilePos.y) < Unit.Constants.minTilesToCompleteMove
     }
 
-    isUnderMouse(): boolean {
-        const mx = Math.trunc(Mouse.shared.x)
-        const my = Math.trunc(Mouse.shared.y)
+    /// Whether the screen point (mx, my) is on the unit's sprite.
+    isUnder(mx: number, my: number): boolean {
         const fw = this.sprite?.frameWidth  ?? 20
         const fh = this.sprite?.frameHeight ?? 30
         const hw = fw / 2

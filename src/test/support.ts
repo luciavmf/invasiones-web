@@ -7,6 +7,9 @@ import type { BattleMap, Battlefield } from '../game/level/Battlefield'
 import { Camera } from '../game/map/Camera'
 import { PathFinder } from '../game/pathfinding/PathFinder'
 import type { SoundPlayer } from '../game/audio/Sound'
+import type { PointerDevice } from '../game/input/PointerDevice'
+import type { InputMap } from '../game/units/PlayerInput'
+import type { Surface } from '../game/rendering/Surface'
 import { Unit, type UnitFaction } from '../game/units/Unit'
 
 /// A walkability grid built from strings (`.` = walkable), with 64×32 tiles like the
@@ -58,4 +61,45 @@ export function openField(size = 40) {
     }
 
     return { grid, battlefield, pathFinder, sound, makeUnit }
+}
+
+/// A mouse the test moves and clicks by hand.
+export class FakePointer implements PointerDevice {
+    x = 0
+    y = 0
+    readonly pressedButtons = new Set<number>()
+    dragRect = { x: 0, y: 0, width: 0, height: 0 }
+    dragging = false
+    finishedDragging = false
+    cursor: Surface | null = null
+
+    isDragging(): boolean { return this.dragging }
+    didFinishDragging(): boolean { return this.finishedDragging }
+    releaseButton(button: number): void { this.pressedButtons.delete(button) }
+    setCursor(surface: Surface | null): void { this.cursor = surface }
+
+    press(button: number): void { this.pressedButtons.add(button) }
+}
+
+/// The one tile under the pointer, as player input sees it.
+export class FakeInputMap implements InputMap {
+    /// The map tile and the physical tile under the pointer.
+    tile = { x: 1, y: 2 }
+    physicalTile = { x: 3, y: 4 }
+    /// Whether the physical tile under the pointer is walkable.
+    walkable = true
+    /// Whether the map tile under the pointer is part of an infirmary.
+    infirmary = false
+
+    tiles(): { tile: { x: number; y: number }; physicalTile: { x: number; y: number } } {
+        return { tile: this.tile, physicalTile: this.physicalTile }
+    }
+
+    isWalkable(x: number, y: number): boolean {
+        return this.walkable && x === this.physicalTile.x && y === this.physicalTile.y
+    }
+
+    isInfirmary(x: number, y: number): boolean {
+        return this.infirmary && x === this.tile.x && y === this.tile.y
+    }
 }

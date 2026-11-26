@@ -8,7 +8,6 @@ import { MapObject }  from '../level/MapObject'
 import { Animation }  from '../sprites/Animation'
 import { ResourceManager } from '../resources/ResourceManager'
 import { Mouse }      from '../input/Mouse'
-import { Res }        from '../resources/Res'
 import { Video }      from '../rendering/Video'
 import { CommandKind } from '../level/Command'
 import type { Map }    from '../map/Map'
@@ -16,6 +15,10 @@ import type { Camera } from '../map/Camera'
 import type { ObjectTable } from '../level/ObjectTable'
 import type { Hud }    from '../level/Hud'
 import type { Video as VideoType } from '../rendering/Video'
+import { AnimationID } from '../resources/AnimationID'
+import { ImageID } from '../resources/ImageID'
+import { TileKind, TilesetID } from '../map/TilesetID'
+import { UnitType } from '../resources/UnitType'
 
 /// The player-controlled Argentine faction.
 export class ArgentineTeam extends Player {
@@ -35,11 +38,11 @@ export class ArgentineTeam extends Player {
         Group.map    = map
 
         const anims = ResourceManager.shared.animations
-        if (Res.ANIM_AROS < anims.length && anims[Res.ANIM_AROS]) {
-            this.ring = new AnimObject(anims[Res.ANIM_AROS]!.clone(), 0, 0)
+        if (AnimationID.rings < anims.length && anims[AnimationID.rings]) {
+            this.ring = new AnimObject(anims[AnimationID.rings]!.clone(), 0, 0)
         }
-        if (Res.ANIM_FLECHA_GUIA < anims.length && anims[Res.ANIM_FLECHA_GUIA]) {
-            const anim = anims[Res.ANIM_FLECHA_GUIA]!.clone()
+        if (AnimationID.guideArrow < anims.length && anims[AnimationID.guideArrow]) {
+            const anim = anims[AnimationID.guideArrow]!.clone()
             anim.init()
             this.orientationArrow = anim
         }
@@ -55,12 +58,12 @@ export class ArgentineTeam extends Player {
 
     override async loadUnits(_levelIndex: number): Promise<void> {
         this.arrowObj = new MapObject(
-            ResourceManager.shared.getImageSync(Res.IMG_FLECHA), 0, 0)
+            ResourceManager.shared.getImageSync(ImageID.arrow), 0, 0)
         this.count_ = 99999
 
         const unitsTileset = this.map.tilesets
             .filter(ts => ts !== null)
-            .find(ts => ts!.id === Res.TLS_UNIDADES)
+            .find(ts => ts!.id === TilesetID.units)
         if (!unitsTileset) return
 
         this.units = []
@@ -70,9 +73,9 @@ export class ArgentineTeam extends Player {
                 if (!tileId) continue
                 const localId = tileId - unitsTileset.firstGid
                 const tile    = unitsTileset.tiles[localId]
-                if (!tile || tile.id !== Res.TILE_UNIDADES_ID_PATRICIO) continue
+                if (!tile || tile.kind !== TileKind.patricio) continue
 
-                const list = this.placeUnits(Res.UNIDAD_PATRICIO, tile.count, i << 1, j << 1)
+                const list = this.placeUnits(UnitType.patricio, tile.count, i << 1, j << 1)
                 if (list.length > 1) {
                     if (!this.groups) this.groups = []
                     this.groups.push(new Group(list))
@@ -212,7 +215,7 @@ export class ArgentineTeam extends Player {
             let tileX = 0, i = startCol, j = startRow
             while (tileX <= rect.w && j >= 0) {
                 if (i >= 0 && i < this.map.physicalMapHeight && j < this.map.physicalMapWidth) {
-                    const obj = this.objectsToDraw.tabla[i]?.[j]
+                    const obj = this.objectsToDraw.table[i]?.[j]
                     if (obj instanceof Unit && obj.isUnderMouse()) return obj
                 }
                 tileX++; i++; j--
@@ -270,7 +273,7 @@ export class ArgentineTeam extends Player {
                 if (!ts) return
                 const localId = btId - ts.firstGid
                 const tp = ts.tiles[localId]
-                if (!tp || ts.id !== Res.TLS_INVALIDADO || tp.id !== Res.TILE_INVALIDADOS_ID_ENFERMERIA) return
+                if (!tp || ts.id !== TilesetID.invalidated || tp.kind !== TileKind.infirmary) return
 
                 const sg = this.selectedGroup, su = this.selectedUnit
                 if (sg && sg.health < sg.resistancePoints) sg.heal(tile.x, tile.y)
@@ -329,12 +332,12 @@ export class ArgentineTeam extends Player {
     }
 
     private updateCursor(): void {
-        Mouse.shared.setCursor(ResourceManager.shared.getImageSync(Res.IMG_CURSOR))
+        Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.cursor))
 
         if (!this.selectedUnit && !this.selectedGroup) return
 
         if (this.unitUnderMouse?.faction === 'enemy') {
-            Mouse.shared.setCursor(ResourceManager.shared.getImageSync(Res.IMG_CURSOR_ESPADA))
+            Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.swordCursor))
         }
 
         if (this.selectedUnit?.isDead()) this.clearSelection()
@@ -347,11 +350,11 @@ export class ArgentineTeam extends Player {
         if (!ts) return
         const localId = btId - ts.firstGid
         const tp = ts.tiles[localId]
-        if (!tp || ts.id !== Res.TLS_INVALIDADO || tp.id !== Res.TILE_INVALIDADOS_ID_ENFERMERIA) return
+        if (!tp || ts.id !== TilesetID.invalidated || tp.kind !== TileKind.infirmary) return
 
         const needsHeal = (this.selectedUnit ? this.selectedUnit.health < this.selectedUnit.resistancePoints : false)
                        || (this.selectedGroup ? this.selectedGroup.health < this.selectedGroup.resistancePoints : false)
-        if (needsHeal) Mouse.shared.setCursor(ResourceManager.shared.getImageSync(Res.IMG_CURSOR_ENFERMERIA))
+        if (needsHeal) Mouse.shared.setCursor(ResourceManager.shared.getImageSync(ImageID.infirmaryCursor))
     }
 
     private updateObjectives(): void {

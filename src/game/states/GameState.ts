@@ -10,9 +10,9 @@ import { Button }          from '../gui/Button'
 import { Surface }         from '../rendering/Surface'
 import { Video }           from '../rendering/Video'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Res }             from '../resources/Res'
 import { FontConstants, GameColor } from '../Definitions'
 import type { Video as VideoType } from '../rendering/Video'
+import { StringID } from '../resources/StringID'
 
 const GS = { start: 0, won: 1, lost: 2, menu: 3, playing: 4, confirmation: 5 } as const
 type GSK  = typeof GS[keyof typeof GS]
@@ -34,8 +34,8 @@ export class GameState extends State {
         this.state = GS.start
         this.gameMenu = new Menu(null, 2, 0, 0, Surface.centerHorizontal | Surface.centerVertical)
         this.gameMenu.font = ResourceManager.shared.fonts[FontConstants.menuFont]
-        this.gameMenu.addItem(MI.continuar, Res.STR_MENU_CONTINUAR, 1)
-        this.gameMenu.addItem(MI.quit,      Res.STR_MENU_SALIR,     1)
+        this.gameMenu.addItem(MI.continuar, StringID.menuContinue, 1)
+        this.gameMenu.addItem(MI.quit,      StringID.menuExit,     1)
     }
 
     update(): void {
@@ -45,14 +45,14 @@ export class GameState extends State {
                 this.episode.start()
                 this.state = GS.playing
 
-                this.button = new Button(Res.STR_BOTON_MENU_DEL_JUEGO, null)
+                this.button = new Button(StringID.buttonGameMenu, null)
                 if (this.button) {
                     this.button.frame.posX = Video.width  - this.button.frame.width  - Button.Constants.screenEdgeOffset
                     this.button.frame.posY = Button.Constants.screenEdgeOffset
                 }
 
                 this.confirmMenu = new ConfirmationMenu(
-                    Res.STR_CONFIRMACION_SALIR, Res.STR_NO, Res.STR_SI)
+                    StringID.exitConfirmation, StringID.no, StringID.yes)
                 this.confirmMenu.setPosition(0, 0, Surface.centerVertical | Surface.centerHorizontal)
                 break
             }
@@ -92,7 +92,7 @@ export class GameState extends State {
                 this.episode?.draw(video)
                 this.gameMenu?.draw(video)
                 video.setFont(ResourceManager.shared.fonts[FontConstants.titleFont], GameColor.white)
-                video.writeId(Res.STR_JUEGO_PAUSADO, 0, this.gamePausedY,
+                video.writeId(StringID.gamePaused, 0, this.gamePausedY,
                     Surface.centerVertical | Surface.centerHorizontal)
                 break
             }

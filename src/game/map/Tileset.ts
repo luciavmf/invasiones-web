@@ -1,15 +1,15 @@
 // Copyright © 2026 Lucia Medina Fretes. All rights reserved.
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Tile } from './Tile'
-import { Res } from '../resources/Res'
 import type { Surface } from '../rendering/Surface'
 import { ResourceManager } from '../resources/ResourceManager'
+import { TilesetID, tilesetIDFromTsxName, tileKindFromProperty } from './TilesetID'
 
 /// Loads and queries a TSX tileset (Tiled format).
 export class Tileset {
 
     firstGid   = 0
-    id         = 0
+    id: TilesetID = TilesetID.debug
     tileWidth  = 0
     tileHeight = 0
     name       = ''
@@ -18,21 +18,7 @@ export class Tileset {
 
     private setName(n: string): void {
         this.name = n
-        switch (n.toLowerCase()) {
-            case 'tierra':      this.id = Res.TLS_TIERRA;     break
-            case 'agua':        this.id = Res.TLS_AGUA;       break
-            case 'pasto':       this.id = Res.TLS_PASTO;      break
-            case 'arboles':     this.id = Res.TLS_ARBOLES;    break
-            case 'unidades':    this.id = Res.TLS_UNIDADES;   break
-            case 'piedras':     this.id = Res.TLS_PIEDRAS;    break
-            case 'texturas':    this.id = Res.TLS_TEXTURAS;   break
-            case 'piedras2':    this.id = Res.TLS_PIEDRAS2;   break
-            case 'enfermeria':  this.id = Res.TLS_ENFERMERIA; break
-            case 'edificios':   this.id = Res.TLS_EDIFICIOS;  break
-            case 'invalidados': this.id = Res.TLS_INVALIDADO; break
-            case 'objetivos':   this.id = Res.TLS_OBJETIVOS;  break
-            case 'fuerte':      this.id = Res.TLS_FUERTE;     break
-        }
+        this.id = tilesetIDFromTsxName(n)
     }
 
     private initTiles(): void {
@@ -78,12 +64,7 @@ export class Tileset {
                 const propName  = (prop.getAttribute('name')  ?? '').toLowerCase()
                 const propValue =  prop.getAttribute('value') ?? ''
                 if (propName === 'id' || propName === 'unidad') {
-                    switch (propValue) {
-                        case 'PATRICIO':   tile.id = Res.TILE_UNIDADES_ID_PATRICIO;       break
-                        case 'INGLES':     tile.id = Res.TILE_UNIDADES_ID_INGLES;         break
-                        case 'ENFERMERIA': tile.id = Res.TILE_INVALIDADOS_ID_ENFERMERIA;   break
-                        case 'CASA':       tile.id = Res.TILE_INVALIDADOS_ID_CASA;         break
-                    }
+                    tile.kind = tileKindFromProperty(propValue)
                 } else if (propName === 'cantidad') {
                     tile.count = parseInt(propValue, 10) || 0
                 }

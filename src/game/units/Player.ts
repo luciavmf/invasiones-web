@@ -10,6 +10,7 @@ import { AnimObject } from '../level/AnimObject'
 import { Map }        from '../map/Map'
 import type { Camera } from '../map/Camera'
 import type { Hud }   from '../level/Hud'
+import type { UnitType } from '../resources/UnitType'
 
 export type Faction = 'enemy' | 'argentine'
 
@@ -133,9 +134,9 @@ export class Player {
             const jS = ord.point.y - ord.width, jE = ord.point.y + ord.width
             for (let i = iS; i < iE; i++) {
                 for (let j = jS; j < jE; j++) {
-                    if (i < 0 || j < 0 || i >= this.objectsToDraw.tabla.length) continue
-                    if (j >= this.objectsToDraw.tabla[i].length) continue
-                    const obj = this.objectsToDraw.tabla[i][j]
+                    if (i < 0 || j < 0 || i >= this.objectsToDraw.table.length) continue
+                    if (j >= this.objectsToDraw.table[i].length) continue
+                    const obj = this.objectsToDraw.table[i][j]
                     if (obj instanceof Unit && obj.faction === 'enemy') {
                         this.someoneCompletedOrder = false
                     }
@@ -148,8 +149,8 @@ export class Player {
         if (!this.deadUnits) return
         for (const dead of this.deadUnits) {
             const ti = dead.physicalTilePos.x, tj = dead.physicalTilePos.y
-            if (ti < this.objectsToDraw.tabla.length && tj < this.objectsToDraw.tabla[ti].length) {
-                if (this.objectsToDraw.tabla[ti][tj] === dead) this.objectsToDraw.tabla[ti][tj] = null
+            if (ti < this.objectsToDraw.table.length && tj < this.objectsToDraw.table[ti].length) {
+                if (this.objectsToDraw.table[ti][tj] === dead) this.objectsToDraw.table[ti][tj] = null
             }
             this.units = this.units.filter(u => u !== dead)
         }
@@ -166,8 +167,8 @@ export class Player {
         for (let i = iS; i < iE; i++) {
             for (let j = jS; j < jE; j++) {
                 if (unit.calculateDistance(i, j) > unit.visibility) continue
-                if (i < this.objectsToDraw.tabla.length && j < this.objectsToDraw.tabla[i].length) {
-                    const other = this.objectsToDraw.tabla[i][j]
+                if (i < this.objectsToDraw.table.length && j < this.objectsToDraw.table[i].length) {
+                    const other = this.objectsToDraw.table[i][j]
                     if (other instanceof Unit && other !== unit) {
                         if (!visible) visible = []
                         visible.push(other)
@@ -189,7 +190,7 @@ export class Player {
         this.selectedUnit  = null
     }
 
-    placeUnits(type: number, count: number, x: number, y: number): Unit[] {
+    placeUnits(type: UnitType, count: number, x: number, y: number): Unit[] {
         if (count <= 0) return []
         const group: Unit[] = []
         let i = 0, j = 0, inc = 2, dir = 1, placed = 0
@@ -210,7 +211,7 @@ export class Player {
         return group
     }
 
-    private placeUnitInternal(type: number, i: number, j: number): Unit | null {
+    private placeUnitInternal(type: UnitType, i: number, j: number): Unit | null {
         if (!this.map.isWalkable(i, j)) return null
         const u = new Unit(type)
         u.physicalTilePos = { x: i, y: j }
@@ -219,8 +220,8 @@ export class Player {
         u.faction = this.faction
 
         this.units.push(u)
-        if (i < this.objectsToDraw.tabla.length && j < this.objectsToDraw.tabla[i].length) {
-            this.objectsToDraw.tabla[i][j] = u
+        if (i < this.objectsToDraw.table.length && j < this.objectsToDraw.table[i].length) {
+            this.objectsToDraw.table[i][j] = u
         }
         return u
     }
@@ -229,12 +230,12 @@ export class Player {
         const moved = unit.update()
         if (moved) {
             const pi = unit.previousTile.x, pj = unit.previousTile.y
-            if (pi < this.objectsToDraw.tabla.length && pj < this.objectsToDraw.tabla[pi].length) {
-                if (this.objectsToDraw.tabla[pi][pj] === unit) this.objectsToDraw.tabla[pi][pj] = null
+            if (pi < this.objectsToDraw.table.length && pj < this.objectsToDraw.table[pi].length) {
+                if (this.objectsToDraw.table[pi][pj] === unit) this.objectsToDraw.table[pi][pj] = null
             }
             const ni = unit.physicalTilePos.x, nj = unit.physicalTilePos.y
-            if (ni < this.objectsToDraw.tabla.length && nj < this.objectsToDraw.tabla[ni].length) {
-                this.objectsToDraw.tabla[ni][nj] = unit
+            if (ni < this.objectsToDraw.table.length && nj < this.objectsToDraw.table[ni].length) {
+                this.objectsToDraw.table[ni][nj] = unit
             }
         }
     }
@@ -256,8 +257,8 @@ export class Player {
 
         for (let i = iS; i < iE; i++) {
             for (let j = jS; j < jE; j++) {
-                if (i >= this.objectsToDraw.tabla.length || j >= this.objectsToDraw.tabla[i].length) continue
-                const other = this.objectsToDraw.tabla[i][j]
+                if (i >= this.objectsToDraw.table.length || j >= this.objectsToDraw.table[i].length) continue
+                const other = this.objectsToDraw.table[i][j]
                 if (other instanceof Unit && other !== unit) {
                     if (other.calculateDistance(unit.physicalTilePos.x, unit.physicalTilePos.y) <= r) {
                         if (!nearby) nearby = []

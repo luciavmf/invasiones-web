@@ -8,6 +8,7 @@ import { Mouse, MOUSE_LEFT } from '../input/Mouse'
 import type { GameFont } from '../resources/GameFont'
 import type { Surface as SurfaceType } from '../rendering/Surface'
 import type { Video as VideoType } from '../rendering/Video'
+import type { StringID } from '../resources/StringID'
 
 export class Menu {
 
@@ -23,7 +24,9 @@ export class Menu {
     font:  GameFont | null = null
     image: SurfaceType | null = null
 
-    private items:        number[]
+    /// Each item's flags (`Menu.Constants.item*`) and label.
+    private itemFlags:    number[]
+    private itemLabels:   (StringID | null)[]
     private itemCount   = 0
     private buttonWidth  = 160
     private buttonHeight = 26
@@ -33,18 +36,20 @@ export class Menu {
     private anchor       = 0
 
     constructor(image: SurfaceType | null, _itemCount: number, x: number, y: number, anchor: number) {
-        this.items     = new Array(Menu.Constants.maxItemCount).fill(0)
+        this.itemFlags  = new Array(Menu.Constants.maxItemCount).fill(0)
+        this.itemLabels = new Array(Menu.Constants.maxItemCount).fill(null)
         this.originalX = x
         this.originalY = y
         this.anchor    = anchor
         this.image     = image
     }
 
-    addItem(index: number, stringId: number, flag: number): boolean {
+    addItem(index: number, label: StringID, flag: number): boolean {
         if (index > Menu.Constants.maxItemCount - 1) return false
 
         if (this.itemCount === index) this.itemCount++
-        this.items[index] = (flag << 8) | (stringId & 0xFF)
+        this.itemFlags[index]  = flag
+        this.itemLabels[index] = label
 
         if (this.anchor & Surface.centerHorizontal) {
             this.frame.posX = (Video.width >> 1) - (this.buttonWidth >> 1) + this.originalX
@@ -80,19 +85,19 @@ export class Menu {
         let y = this.frame.posY
 
         for (let i = 0; i < this.itemCount; i++) {
-            const flags = (this.items[i] & 0xFF00) >> 8
+            const flags = this.itemFlags[i]
             if (flags !== Menu.Constants.itemHidden) {
                 const mx = Mouse.shared.x
                 const my = Mouse.shared.y
                 if (mx > this.frame.posX && mx < this.frame.posX + this.buttonWidth
                  && my > y && my < y + this.buttonHeight) {
-                    this.items[i] |= (Menu.Constants.itemHover << 8)
+                    this.itemFlags[i] |= Menu.Constants.itemHover
                     if (Mouse.shared.pressedButtons.has(MOUSE_LEFT)) {
-                        this.items[i] |= (Menu.Constants.itemSelected << 8)
+                        this.itemFlags[i] |= Menu.Constants.itemSelected
                         selectedItem = i
                     }
                 } else {
-                    this.items[i] &= ~(Menu.Constants.itemHover << 8)
+                    this.itemFlags[i] &= ~Menu.Constants.itemHover
                 }
                 y += this.lineSpacing + this.buttonHeight
             }
@@ -117,15 +122,16 @@ export class Menu {
 
         let y = this.frame.posY
         for (let i = 0; i < this.itemCount; i++) {
-            const flags = (this.items[i] & 0xFF00) >> 8
-            if (flags !== Menu.Constants.itemHidden) {
+            const flags = this.itemFlags[i]
+            const label = this.itemLabels[i]
+            if (flags !== Menu.Constants.itemHidden && label !== null) {
                 if (flags & Menu.Constants.itemHover) {
                     video.setColor(GameColor.black)
                     video.fillRect(this.frame.posX, y, this.buttonWidth, this.buttonHeight)
                 }
                 video.setFont(this.font, Theme.text)
                 video.writeId(
-                    this.items[i] & 0xFF,
+                    label,
                     this.frame.posX - (Video.width  >> 1) + (this.buttonWidth  >> 1),
                     y              - (Video.height >> 1) + (this.buttonHeight >> 1),
                     Surface.centerHorizontal | Surface.centerVertical,

@@ -7,11 +7,12 @@ import { ResourceManager } from '../resources/ResourceManager'
 import { Sound, type SoundPlayer } from '../audio/Sound'
 import { Mouse }       from '../input/Mouse'
 import { Sprite }      from '../sprites/Sprite'
-import { Res }         from '../resources/Res'
 import type { Surface } from '../rendering/Surface'
 import type { Video }   from '../rendering/Video'
 import type { Group }   from './Group'
 import { GameColor }   from '../Definitions'
+import { SoundID } from '../audio/Sound'
+import { SpriteID, UnitType } from '../resources/UnitType'
 
 const UnitState = {
     idle: 'idle', moving: 'moving', dying: 'dying',
@@ -27,6 +28,15 @@ const Substep = {
     completedStep: 'completedStep',
 } as const
 type Substep = typeof Substep[keyof typeof Substep]
+
+/// The first animation of each pack in a soldier sprite. Each pack has one animation
+/// per direction (8), in the order of res.json's animpaks.
+const AnimationPack = {
+    idle:      0,
+    walking:   8,
+    dying:     16,
+    attacking: 24,
+} as const
 
 export type UnitFaction = 'enemy' | 'argentine'
 
@@ -44,7 +54,8 @@ export class Unit extends MapObject {
         deathFrameCount:        150,
     }
 
-    private unitType    = 0
+    /// The kind of soldier.
+    type: UnitType = UnitType.patricio
     private substate: Substep = Substep.incrementStep
     faction: UnitFaction = 'enemy'
     health          = 100
@@ -95,14 +106,14 @@ export class Unit extends MapObject {
 
     /// Creates a unit of the given type with the stats ResourceManager loaded for it.
     /// Tests leave out the type, and pass their own pathfinder and sound.
-    constructor(typeId?: number, pathFinder: PathFinder = PathFinder.shared, sound: SoundPlayer = Sound.shared) {
+    constructor(typeId?: UnitType, pathFinder: PathFinder = PathFinder.shared, sound: SoundPlayer = Sound.shared) {
         super()
         this.pathFinder = pathFinder
         this.sound = sound
         if (typeId === undefined) return
         const data = ResourceManager.shared.unitTypeData[typeId]
         if (!data) { console.warn(`Unit: no data for type ${typeId}`); return }
-        this.unitType           = typeId
+        this.type               = typeId
         this.currentSpeed       = { x: data.speed ?? 2, y: data.speed ?? 2 }
         this.defaultSpeedVec    = { x: data.speed ?? 2, y: data.speed ?? 2 }
         this.health             = data.resistance ?? 100
@@ -117,7 +128,7 @@ export class Unit extends MapObject {
         this.ticksPerRecovery   = data.recoveryTicks  ?? 50
         this.recoveryPoints_    = data.recoveryPoints ?? 20
 
-        const sprIdx = data.spriteIdx ?? (typeId === Res.UNIDAD_PATRICIO ? Res.SPR_PATRICIO : Res.SPR_INGLES)
+        const sprIdx = data.spriteIdx ?? (typeId === UnitType.patricio ? SpriteID.patricio : SpriteID.british)
         const src = ResourceManager.shared.sprites[sprIdx]
         if (src) this.sprite = src.clone()
     }
@@ -430,20 +441,17 @@ export class Unit extends MapObject {
         sprite.update()
     }
 
+    /// The first animation of the pack shown in the unit's state, as in the original.
     private firstAnimation(): number {
         switch (this.stateValue) {
             case UnitState.idle:
-            case UnitState.healing:
-                return this.unitType === 0 ? Res.SPR_ANIM_PATRICIO_QUIETO_N : Res.SPR_ANIM_INGLES_QUIETO_N
+            case UnitState.healing:      return AnimationPack.idle
             case UnitState.moving:
             case UnitState.pursuingUnit:
-            case UnitState.patrolling:
-                return this.unitType === 0 ? Res.SPR_ANIM_PATRICIO_CAMINA_N : Res.SPR_ANIM_INGLES_CAMINA_N
+            case UnitState.patrolling:   return AnimationPack.walking
             case UnitState.dying:
-            case UnitState.dead:
-                return this.unitType === 0 ? Res.SPR_ANIM_PATRICIO_MUERE_N : Res.SPR_ANIM_INGLES_MUERE_N
-            case UnitState.attacking:
-                return this.unitType === 0 ? Res.SPR_ANIM_PATRICIO_ATACA_N : Res.SPR_ANIM_INGLES_ATACA_N
+            case UnitState.dead:         return AnimationPack.dying
+            case UnitState.attacking:    return AnimationPack.attacking
         }
     }
 
@@ -645,14 +653,14 @@ export class Unit extends MapObject {
     private updateDyingState(): void {
         if (this.count === 0) {
             // The original plays the Patricio's death sound for every unit, British ones included.
-            this.sound.play(Res.SFX_MUERTE_PATRICIO, 0)
+            this.sound.play(SoundID.patricioDeath, 0)
         }
         if (this.count >= Unit.Constants.deathFrameCount) { this.setState(UnitState.dead); return }
         this.count++
     }
 
     private playShotSound(): void {
-        const sfx = this.faction === 'argentine' ? Res.SFX_DISPARO_PATRICIO : Res.SFX_DISPARO_INGLES
+        const sfx = this.faction === 'argentine' ? SoundID.patricioShot : SoundID.britishShot
         this.sound.play(sfx, 0)
     }
 

@@ -4,9 +4,9 @@ import type { MapObject } from './MapObject'
 
 /// 2-D table of MapObject references indexed by physical tile position.
 export class ObjectTable {
-    tabla: (MapObject | null)[][]
+    table: (MapObject | null)[][]
 
     constructor(data: (MapObject | null)[][]) {
-        this.tabla = data
+        this.table = data
     }
 }

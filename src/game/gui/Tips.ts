@@ -2,13 +2,13 @@
 // Licensed under the MIT License. See LICENSE in the project root for details.
 import { Frame }   from './Frame'
 import { Button }  from './Button'
-import { Res }     from '../resources/Res'
 import { Surface } from '../rendering/Surface'
 import { Video }   from '../rendering/Video'
 import { ResourceManager } from '../resources/ResourceManager'
 import { GameText } from '../resources/GameText'
 import { FontConstants, Theme } from '../Definitions'
 import type { Video as VideoType } from '../rendering/Video'
+import { StringID } from '../resources/StringID'
 
 /// Floating window that shows random gameplay tips.
 export class Tips {
@@ -29,7 +29,7 @@ export class Tips {
     private blinkCount = 0
 
     constructor() {
-        this.tipButton = new Button(Res.STR_TIP_00, null)
+        this.tipButton = new Button(StringID.tipButton, null)
         this.tipButton.frame.posX = Video.width  - this.tipButton.frame.width  - 20
         this.tipButton.frame.posY = Video.height - 90 - this.tipButton.frame.height
 

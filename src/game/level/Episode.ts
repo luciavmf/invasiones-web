@@ -372,6 +372,7 @@ export class Episode {
             if (toggle) { startCol++; toggle = false }
             else        { startRow++; toggle = true  }
         }
+        this.player.drawMarkers(video)
         video.setClip(oldClip.x, oldClip.y, oldClip.w, oldClip.h)
     }
 
@@ -447,8 +448,10 @@ export class Episode {
         else if (keys.has('KeyB') && this.cheatObjIdx === 1) this.cheatObjIdx++
         else if (keys.has('KeyJ') && this.cheatObjIdx === 2) this.cheatObjIdx++
         else if (keys.has('KeyX') && this.cheatObjIdx === 3) this.cheatObjIdx++
-        else if (keys.has('KeyW') && this.cheatObjIdx === 4) { this.setNewObjective(); this.cheatObjIdx = 0 }
-        else {
+        // The original doesn't reset this cheat, so the next key only resets it.
+        else if (keys.has('KeyW') && this.cheatObjIdx === 4) { this.cheatObjIdx++; this.setNewObjective() }
+        // Only a key press resets the cheats, so they can be typed one key per frame.
+        else if (keys.size > 0) {
             if (keys.has('KeyU')) this.player?.selectNextUnit()
             this.cheatWinIdx = 0; this.cheatLoseIdx = 0; this.cheatObjIdx = 0
         }

@@ -4,7 +4,7 @@ import { MapObject }    from '../level/MapObject'
 import { Command, CommandKind } from '../level/Command'
 import { PathFinder }  from '../pathfinding/PathFinder'
 import { ResourceManager } from '../resources/ResourceManager'
-import { Sound }       from '../audio/Sound'
+import { Sound, type SoundPlayer } from '../audio/Sound'
 import { Mouse }       from '../input/Mouse'
 import { Sprite }      from '../sprites/Sprite'
 import { Res }         from '../resources/Res'
@@ -77,7 +77,12 @@ export class Unit extends MapObject {
     private formationOffset_ = { x: 0, y: 0 }
     private ticksPerRecovery = 50
     private recoveryPoints_  = 20
-    private recoveryTicks    = 0
+    /// The state the animation was last chosen for.
+    private shownState: UnitState | null = null
+    /// Used to compute movement paths. Injectable so tests can use a hand-made grid.
+    private readonly pathFinder: PathFinder
+    /// Used for shot and death sounds. Injectable so tests can record calls.
+    private readonly sound: SoundPlayer
     private group_: Group | null = null
     get currentState(): UnitState { return this.stateValue }
     get range(): number { return this.attackRange }
@@ -88,8 +93,12 @@ export class Unit extends MapObject {
     get belongsToGroup(): boolean { return this.group_ !== null }
     get myGroup(): Group | null { return this.group_ }
 
-    constructor(typeId?: number) {
+    /// Creates a unit of the given type with the stats ResourceManager loaded for it.
+    /// Tests leave out the type, and pass their own pathfinder and sound.
+    constructor(typeId?: number, pathFinder: PathFinder = PathFinder.shared, sound: SoundPlayer = Sound.shared) {
         super()
+        this.pathFinder = pathFinder
+        this.sound = sound
         if (typeId === undefined) return
         const data = ResourceManager.shared.unitTypeData[typeId]
         if (!data) { console.warn(`Unit: no data for type ${typeId}`); return }
@@ -128,10 +137,10 @@ export class Unit extends MapObject {
         this.completedOrder = false
 
         switch (this.stateValue) {
-            case UnitState.idle:         this.updateIdleAnimation(); break
+            case UnitState.idle:         break
             case UnitState.moving:       movedOnMap = this.updateMovingState(); break
             case UnitState.patrolling:   movedOnMap = this.updatePatrollingState(); break
-            case UnitState.pursuingUnit: this.updatePursuingUnitState(); break
+            case UnitState.pursuingUnit: movedOnMap = this.updatePursuingUnitState(); break
             case UnitState.attacking:    this.updateAttackingState(); break
             case UnitState.dying:        this.updateDyingState(); break
             case UnitState.healing:      this.updateHealingState(); break
@@ -139,7 +148,7 @@ export class Unit extends MapObject {
 
         this.checkOrderCompleted()
         super.update()
-        this.updateSpriteAnim()
+        this.updateAnimation()
         return movedOnMap
     }
 
@@ -165,7 +174,7 @@ export class Unit extends MapObject {
         this.setState(UnitState.moving)
         this.nextStateValue = UnitState.idle
 
-        const path = PathFinder.shared.findShortestPath(
+        const path = this.pathFinder.findShortestPath(
             this.physicalTilePos.x, this.physicalTilePos.y, x, y)
 
         if (path && path.length > 0) {
@@ -213,7 +222,7 @@ export class Unit extends MapObject {
     private setHealing(x: number, y: number): void {
         this.setState(UnitState.moving)
         this.nextStateValue = UnitState.healing
-        const path = PathFinder.shared.findShortestPath(
+        const path = this.pathFinder.findShortestPath(
             this.physicalTilePos.x, this.physicalTilePos.y, x, y)
         if (path && path.length > 0) {
             this.pathToFollow = path.slice(0, -1)
@@ -275,10 +284,13 @@ export class Unit extends MapObject {
         return Math.sqrt(di * di + dj * dj)
     }
 
+    /// Whether the unit is close enough to its objective tile to count a move order as
+    /// fulfilled: closer than `minTilesToCompleteMove` tiles on each axis, as in the original.
     completedMoveObjective(): boolean {
         if (!this.objectiveCommand) return false
-        return this.calculateDistance(this.objectiveCommand.point.x, this.objectiveCommand.point.y) <=
-               Unit.Constants.minTilesToCompleteMove
+        const { x, y } = this.objectiveCommand.point
+        return Math.abs(x - this.physicalTilePos.x) < Unit.Constants.minTilesToCompleteMove &&
+               Math.abs(y - this.physicalTilePos.y) < Unit.Constants.minTilesToCompleteMove
     }
 
     isUnderMouse(): boolean {
@@ -326,13 +338,13 @@ export class Unit extends MapObject {
                     const nextValidIdx = this.findNextValidPos(pathCopy, idx, map)
                     if (nextValidIdx === null) { idx = pathCopy.length; continue }
                     idx = nextValidIdx
-                    let seg = PathFinder.shared.findShortestPath(
+                    let seg = this.pathFinder.findShortestPath(
                         pathCopy[prevIdx].i, pathCopy[prevIdx].j, pathCopy[idx].i, pathCopy[idx].j)
                     if (!seg) {
                         const prevV = this.findPrevValidPos(pathCopy, nextValidIdx, map)
                         if (prevV === null) { this.pathToFollow = []; return }
                         idx = prevV
-                        seg = PathFinder.shared.findShortestPath(
+                        seg = this.pathFinder.findShortestPath(
                             pathCopy[prevIdx].i, pathCopy[prevIdx].j, pathCopy[idx].i, pathCopy[idx].j)
                     }
                     if (!seg) { this.pathToFollow = []; return }
@@ -378,12 +390,10 @@ export class Unit extends MapObject {
         if (this.health <= 0) { this.health = 0; this.die() }
     }
 
+    /// Starts dying. The death sound plays on the next frame (see updateDyingState).
     die(): void {
         this.setState(UnitState.dying)
         this.enemy = null
-        if (this.unitType === Res.UNIDAD_PATRICIO) {
-            Sound.shared.play(Res.SFX_MUERTE_PATRICIO, 0)
-        }
     }
 
     // MARK: - Private state handlers
@@ -395,13 +405,30 @@ export class Unit extends MapObject {
         if (s === UnitState.attacking) this.enemy?.counterAttack(this)
     }
 
-    private updateIdleAnimation(): void {
-        this.sprite?.update()
-        this.sprite?.setAnimation(this.firstAnimation() + this.direction)
-        this.sprite?.play()
+    /// Shows the animation for the unit's state and direction, then advances it by one
+    /// frame. Called once per frame. The dying animation plays once and stays on its last frame.
+    private updateAnimation(): void {
+        const sprite = this.sprite
+        if (!sprite) return
+        const animation = this.firstAnimation() + this.direction
+        const isDying = (s: UnitState | null) => s === UnitState.dying || s === UnitState.dead
+        if (isDying(this.stateValue)) {
+            if (!isDying(this.shownState)) {
+                sprite.setAnimation(animation)
+                sprite.loop = false
+                sprite.play()
+            }
+            if (sprite.isAnimationDone()) {
+                sprite.setFrame(sprite.frameCount - 1)
+                sprite.stop()
+            }
+        } else {
+            sprite.setAnimation(animation)
+            sprite.play()
+        }
+        this.shownState = this.stateValue
+        sprite.update()
     }
-
-    private updateSpriteAnim(): void { this.sprite?.update() }
 
     private firstAnimation(): number {
         switch (this.stateValue) {
@@ -422,15 +449,19 @@ export class Unit extends MapObject {
 
     // MARK: - Movement
 
-    private updateMovingState(): boolean { return this.moverse() }
+    private updateMovingState(): boolean { return this.followPath() }
     private updatePatrollingState(): boolean {
         if (!this.pathToFollow) {
             this.pathToFollow = this.findRandomPatrolPath(this.physicalTilePos.x, this.physicalTilePos.y)
         }
-        return this.moverse()
+        return this.followPath()
     }
 
-    private moverse(): boolean {
+    /// Walks one frame along the path: takes the next tile when the last one was reached,
+    /// re-plans after a collision, and steps toward the next tile's centre. When the path
+    /// ends, the unit switches to its next state.
+    /// Returns whether the unit reached a new tile (or re-planned its step) this frame.
+    private followPath(): boolean {
         if (this.substate === Substep.incrementStep) {
             if (!this.pathToFollow || this.pathToFollow.length === 0) {
                 this.setState(this.nextStateValue)
@@ -450,9 +481,6 @@ export class Unit extends MapObject {
 
         const dir = this.getDirection(this.nextStep.x, this.nextStep.y)
         if (dir !== -1) this.direction = dir
-
-        this.sprite?.setAnimation(this.firstAnimation() + this.direction)
-        this.sprite?.play()
 
         const arrived = this.moveToNextStep()
         if (arrived) {
@@ -492,13 +520,13 @@ export class Unit extends MapObject {
         if (!this.pathToFollow || this.pathToFollow.length === 0) { this.setLastPos(); return }
 
         let nextTileIJ = this.pathToFollow.pop()!
-        let newPath = PathFinder.shared.findShortestPath(
+        let newPath = this.pathFinder.findShortestPath(
             this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j, blocked)
 
         while (!newPath) {
             if (!this.pathToFollow || this.pathToFollow.length === 0) { this.setLastPos(); return }
             nextTileIJ = this.pathToFollow.pop()!
-            newPath = PathFinder.shared.findShortestPath(
+            newPath = this.pathFinder.findShortestPath(
                 this.physicalTilePos.x, this.physicalTilePos.y, nextTileIJ.i, nextTileIJ.j, blocked)
         }
 
@@ -537,7 +565,7 @@ export class Unit extends MapObject {
             const di   = this.patrolPosition.x + si * offI
             const dj   = this.patrolPosition.y + sj * offJ
             if (!map.isWalkable(di, dj)) continue
-            const path = PathFinder.shared.findShortestPath(i, j, di, dj)
+            const path = this.pathFinder.findShortestPath(i, j, di, dj)
             if (path) return path
         }
         return null
@@ -545,38 +573,61 @@ export class Unit extends MapObject {
 
     // MARK: - Pursuit / attack
 
-    private updatePursuingUnitState(): void {
-        if (!this.enemy) { this.setState(UnitState.idle); return }
-        if (this.enemy.isDead()) { this.enemy = null; this.setState(UnitState.idle); return }
-        const dist = this.calculateDistance(this.enemy.physicalTilePos.x, this.enemy.physicalTilePos.y)
-        if (dist <= this.attackRange) {
-            this.aimAtUnit(this.enemy)
-            this.setState(UnitState.attacking)
-        } else {
-            const ep = this.enemy.physicalTilePos
-            if (!this.pathToFollow ||
-                this.targetPos.x !== ep.x || this.targetPos.y !== ep.y) {
-                this.targetPos = { ...ep }
-                this.move(ep.x, ep.y)
-            } else { this.moverse() }
+    /// Chases the enemy: the path is recalculated whenever it changes tile, and the unit
+    /// starts shooting once closer than its range. Returns true if the unit moved to a new tile.
+    private updatePursuingUnitState(): boolean {
+        const enemy = this.enemy
+        if (!enemy) { this.setState(UnitState.idle); return false }
+        if (enemy.isDead()) { this.enemy = null; this.setState(UnitState.idle); return false }
+
+        this.nextStateValue = UnitState.attacking
+        const ep = enemy.physicalTilePos
+
+        if (this.targetPos.x !== ep.x || this.targetPos.y !== ep.y) {
+            this.targetPos = { ...ep }
+            const path = this.pathFinder.findShortestPath(
+                this.physicalTilePos.x, this.physicalTilePos.y, ep.x, ep.y)
+            if (!path || path.length === 0) { this.setState(UnitState.idle); return false }
+            this.pathToFollow = path.slice(0, -1)   // the last node is the start
+            this.substate = Substep.incrementStep
         }
-        this.sprite?.setAnimation(this.firstAnimation() + this.direction)
-        this.sprite?.play()
+
+        if (this.calculateDistance(ep.x, ep.y) < this.attackRange) {
+            this.aimAtUnit(enemy)
+            this.setState(UnitState.attacking)
+            return false
+        }
+        return this.followPath()
     }
 
+    /// Shoots the enemy every `attackInterval` frames, following it while it stays in range
+    /// and chasing it when it leaves.
     private updateAttackingState(): void {
-        if (!this.enemy) { this.setState(UnitState.idle); return }
-        if (this.enemy.isDead()) { this.enemy = null; this.setState(UnitState.idle); return }
-        this.count++
-        this.sprite?.setAnimation(this.firstAnimation() + this.direction)
-        this.sprite?.play()
-        if (this.count >= this.attackInterval) {
-            this.count = 0
-            this.enemy.takeDamage(this.attackPoints)
-            this.playShotSound()
+        const enemy = this.enemy
+        if (!enemy) { this.setState(UnitState.idle); return }
+        if (enemy.isDead()) { this.enemy = null; this.setState(UnitState.idle); return }
+
+        // If the enemy moved, aim again, or chase it if it's out of range.
+        const ep = enemy.physicalTilePos
+        if (this.targetPos.x !== ep.x || this.targetPos.y !== ep.y) {
+            if (this.calculateDistance(ep.x, ep.y) < this.attackRange) {
+                this.aimAtUnit(enemy)
+                this.targetPos = { ...ep }
+            } else {
+                this.setState(UnitState.pursuingUnit)
+                this.nextStateValue = UnitState.attacking
+            }
         }
-        const dist = this.calculateDistance(this.enemy.physicalTilePos.x, this.enemy.physicalTilePos.y)
-        if (dist > this.attackRange) this.setState(UnitState.pursuingUnit)
+
+        // The original compares before counting, so a shot comes one frame after the interval.
+        const ready = this.count >= this.attackInterval
+        this.count++
+        if (!ready) return
+
+        this.playShotSound()
+        this.count = 0
+        enemy.takeDamage(this.attackPoints)
+        if (enemy.isDead()) { this.enemy = null; this.setState(UnitState.idle) }
     }
 
     private aimAtUnit(enemy: Unit): void {
@@ -590,32 +641,36 @@ export class Unit extends MapObject {
         this.direction = mapping[index]
     }
 
+    /// The unit is dead after `deathFrameCount` frames (its animation plays the death once).
     private updateDyingState(): void {
         if (this.count === 0) {
-            this.sprite?.setAnimation(this.firstAnimation() + this.direction)
-            this.sprite!.loop = false
-            this.sprite?.play()
+            // The original plays the Patricio's death sound for every unit, British ones included.
+            this.sound.play(Res.SFX_MUERTE_PATRICIO, 0)
         }
-        if (this.sprite?.isAnimationDone()) {
-            this.sprite?.setFrame(this.sprite.frameCount - 1)
-            this.sprite?.stop()
-        }
+        if (this.count >= Unit.Constants.deathFrameCount) { this.setState(UnitState.dead); return }
         this.count++
-        if (this.count >= Unit.Constants.deathFrameCount) this.setState(UnitState.dead)
     }
 
     private playShotSound(): void {
-        const sfx = this.unitType === 0 ? Res.SFX_DISPARO_PATRICIO : Res.SFX_DISPARO_INGLES
-        Sound.shared.play(sfx, 0)
+        const sfx = this.faction === 'argentine' ? Res.SFX_DISPARO_PATRICIO : Res.SFX_DISPARO_INGLES
+        this.sound.play(sfx, 0)
     }
 
+    /// Recovers `recoveryPoints` health every `ticksPerRecovery` counts until full.
     private updateHealingState(): void {
-        this.recoveryTicks++
-        if (this.recoveryTicks >= this.ticksPerRecovery) {
-            this.recoveryTicks = 0
-            this.health = Math.min(this.health + this.recoveryPoints_, this.resistancePoints)
+        // The original counts each frame twice (two increments), so recoveries come
+        // about twice as often as ticksPerRecovery suggests.
+        this.count++
+        const due = this.count > this.ticksPerRecovery
+        this.count++
+        if (!due) return
+
+        this.count = 0
+        this.health += this.recoveryPoints_
+        if (this.health >= this.resistancePoints) {
+            this.health = this.resistancePoints
+            this.setState(UnitState.idle)
         }
-        if (this.health >= this.resistancePoints) this.setState(UnitState.idle)
     }
 
     private checkOrderCompleted(): void {
